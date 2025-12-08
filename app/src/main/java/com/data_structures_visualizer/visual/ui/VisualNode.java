@@ -18,7 +18,7 @@ public class VisualNode extends StackPane {
 
     private void drawText(String labelText){
         text = new Text(labelText);
-        text.setFont(new Font(rect.getHeight() / 5));
+        text.setFont(new Font(rect.getHeight() / 4));
         text.setFill(Color.BLACK);
     }
 
@@ -28,6 +28,7 @@ public class VisualNode extends StackPane {
         rect.setWidth(width);
         rect.setHeight(height);
         rect.setStroke(Color.BLACK);
+        rect.setStrokeWidth(0.05 * width);
     }
 
     public Rectangle getRect() {
