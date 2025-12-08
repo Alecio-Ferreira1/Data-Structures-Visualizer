@@ -54,17 +54,17 @@
          <top>
             <HBox alignment="CENTER" prefHeight="100.0" prefWidth="1067.0" spacing="70.0" BorderPane.alignment="CENTER">
                <children>
-                  <Button mnemonicParsing="false" styleClass="top-button" text="LISTA SIMPLES">
+                  <Button fx:id="singly_linked_list_btn" mnemonicParsing="false" styleClass="top-button" text="LISTA SIMPLES">
                      <font>
                         <Font size="18.0" />
                      </font>
                   </Button>
-                  <Button mnemonicParsing="false" styleClass="top-button" text="LISTA DUPLA">
+                  <Button fx:id="doubly_linked_list_btn" mnemonicParsing="false" styleClass="top-button" text="LISTA DUPLA">
                      <font>
                         <Font size="18.0" />
                      </font>
                   </Button>
-                  <Button mnemonicParsing="false" styleClass="top-button" text="LISTA CIRCULAR">
+                  <Button fx:id="circular_linked_list_btn" mnemonicParsing="false" styleClass="top-button" text="LISTA CIRCULAR">
                      <font>
                         <Font size="18.0" />
                      </font>

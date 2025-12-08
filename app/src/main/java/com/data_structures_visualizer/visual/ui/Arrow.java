@@ -49,7 +49,7 @@ public class Arrow extends Group{
         line.setEndX(baseLenght);
         line.setEndY(0);
 
-        double arrowSize = 0.3 * baseLenght;
+        double arrowSize = 0.25 * baseLenght;
 
         head.getPoints().setAll(
             baseLenght - arrowSize, -arrowSize, 
