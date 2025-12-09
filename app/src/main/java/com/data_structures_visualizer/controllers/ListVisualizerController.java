@@ -2,10 +2,13 @@ package com.data_structures_visualizer.controllers;
 
 import java.util.ArrayList;
 
+import com.data_structures_visualizer.util.SceneManager;
 import com.data_structures_visualizer.visual.animation.NodeAnimator;
 import com.data_structures_visualizer.visual.ui.Arrow;
+import com.data_structures_visualizer.visual.ui.CurvedArrow;
 import com.data_structures_visualizer.visual.ui.VisualNode;
 
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -13,7 +16,7 @@ import javafx.scene.control.Slider;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.paint.Color;
 
-public class ListVisualizerController {
+public final class ListVisualizerController {
     @FXML
     private AnchorPane visualization_area;
     @FXML
@@ -26,19 +29,23 @@ public class ListVisualizerController {
     private Button doubly_linked_list_btn;
     @FXML
     private Button circular_linked_list_btn;
+    @FXML 
+    private Button list_btn;
+    @FXML
+    private Button stack_btn; 
+    @FXML
+    private Button queue_btn;
 
     private ArrayList<VisualNode> nodes = new ArrayList<VisualNode>();
     private ArrayList<Arrow> arrows = new ArrayList<Arrow>();
-    // private ArrayList<Arrow> prevArrows;
-    // private Arc arc;  
+    private ArrayList<Arrow> prevArrows;
+    private CurvedArrow curvedArrow;  
     private double initiaWidthForNode = 20;
     private double squareSize = 50.0;
     private Button selectedButton;
 
     @FXML
     public void initialize(){
-        // prevArrows = new ArrayList<Arrow>();
-
         for(int i = 0; i < 10; ++i){  //SÓ PARA TESTE
             nodes.add(i, new VisualNode(squareSize, squareSize, Integer.toString(i)));
             visualization_area.getChildren().add(nodes.get(i));
@@ -47,10 +54,11 @@ public class ListVisualizerController {
                 arrows.add(i, new Arrow(squareSize * 0.6));
                 visualization_area.getChildren().add(arrows.get(i));
             }
-        }
+        } //SÓ PARA TESTE
 
         selectButton(singly_linked_list_btn);
         handleToSelectionListType();
+        handleToScreenChange();
 
         visualization_area.layoutBoundsProperty().addListener((obs, odlVal, newVal) -> {
             fixVisualizationAreaLayout(newVal.getWidth(), newVal.getHeight());
@@ -113,26 +121,36 @@ public class ListVisualizerController {
     }
 
     private void singlyListVisualization(double width, double height){
+        if(prevArrows != null){
+            for(Arrow arrow : prevArrows){
+                visualization_area.getChildren().remove(arrow);
+                prevArrows = null;
+            }
+        }
+
+        if(curvedArrow != null){
+            visualization_area.getChildren().remove(curvedArrow);
+            curvedArrow = null;
+        }
+        
         double value = height < width ? height : width;
         int count = 0;
 
         for(int i = 0; i < nodes.size(); ++i){
-            if(value != 0){ 
-                squareSize = value * 0.08;
-                nodes.get(i).getRect().setWidth(squareSize); 
-                nodes.get(i).getRect().setHeight(squareSize);
-            }
+            if(value != 0) resizeVisualNode(nodes.get(i), value);
                 
-            AnchorPane.setTopAnchor(nodes.get(i), (height / 2) - (nodes.get(i).getRect().getHeight() / 2)); 
-            AnchorPane.setLeftAnchor(nodes.get(i), initiaWidthForNode + ((1.6 * nodes.get(i).getRect().getWidth() * count)));
+            anchorNode(nodes.get(i), width, height, count);
 
             if(i < arrows.size()){
                 double arrowLenght = 0.6 * nodes.get(i).getRect().getWidth();
 
-                arrows.get(i).setStrokeWidth(height * 0.003);
-                arrows.get(i).setLenght(arrowLenght);
+                resizeArrow(arrows.get(i), arrowLenght, width, height);
                     
-                AnchorPane.setTopAnchor(arrows.get(i), (height / 2) - (arrows.get(i).getBoundsInParent().getHeight() / 2)); 
+                AnchorPane.setTopAnchor(
+                    arrows.get(i), 
+                    (height / 2) - (arrows.get(i).getBoundsInParent().getHeight() / 2)
+                );
+
                 AnchorPane.setLeftAnchor(
                     arrows.get(i), 
                     (initiaWidthForNode + nodes.get(i).getRect().getWidth() + 
@@ -145,12 +163,109 @@ public class ListVisualizerController {
     }
 
     private void doublyListVisualization(double width, double height){
+        if(curvedArrow != null){
+            visualization_area.getChildren().remove(curvedArrow);
+            curvedArrow = null;
+        }
+
+        if(prevArrows == null){
+            prevArrows = new ArrayList<Arrow>();
+        }
+
         double value = height < width ? height : width;
+        int count = 0;
 
+        for(int i = 0; i < nodes.size(); ++i){
+            if(value != 0) resizeVisualNode(nodes.get(i), value);
+                
+            anchorNode(nodes.get(i), width, height, count);
 
+            if(i < arrows.size()){
+                double arrowLenght = 0.6 * nodes.get(i).getRect().getWidth();
+
+                resizeArrow(arrows.get(i), arrowLenght, width, height);
+
+                if(i >= prevArrows.size()){
+                    prevArrows.add(i, new Arrow(arrows.get(i)));
+                    prevArrows.get(i).setRotate(180);
+                    visualization_area.getChildren().add(prevArrows.get(i));
+                }
+
+                resizeArrow(prevArrows.get(i), arrowLenght, width, height);
+                    
+                AnchorPane.setTopAnchor(
+                    arrows.get(i), 
+                    (height / 2) - (arrows.get(i).getBoundsInParent().getHeight() * 1.25)
+                );
+
+                AnchorPane.setLeftAnchor(
+                    arrows.get(i), 
+                    (initiaWidthForNode + nodes.get(i).getRect().getWidth() + 
+                    (1.6 * nodes.get(i).getRect().getWidth()) * count)
+                );
+
+                AnchorPane.setTopAnchor(
+                    prevArrows.get(i), 
+                    (height / 2) + (prevArrows.get(i).getBoundsInParent().getHeight() / 2)
+                );
+
+                AnchorPane.setLeftAnchor(
+                    prevArrows.get(i), 
+                    (initiaWidthForNode + nodes.get(i).getRect().getWidth() + 
+                    (1.6 * nodes.get(i).getRect().getWidth()) * count)
+                );
+            }
+
+            count++;
+        }
     }
 
     private void circularListVisualization(double width, double height){
-        
+        singlyListVisualization(width, height);
+
+        if(nodes.size() > 0){
+            Platform.runLater(() -> {
+                int lastNodeIndex = nodes.size() - 1;
+                VisualNode last = nodes.get(lastNodeIndex);
+                VisualNode first = nodes.get(0);
+                double startX = last.getLayoutX() + (last.getRect().getWidth() / 2);
+                double startY = last.getLayoutY() + last.getRect().getHeight();
+                double endX = first.getLayoutX() + (first.getRect().getWidth() / 2);
+                double endY = startY;
+
+                if(curvedArrow == null){
+                    curvedArrow = new CurvedArrow(startX, startY, endX, endY);
+                    visualization_area.getChildren().add(curvedArrow);
+                }
+                
+                curvedArrow.update(startX, startY, endX, endY);
+            });
+        }
+    }
+
+    private void resizeVisualNode(VisualNode node, double value){
+        squareSize = value * 0.08;
+        node.getRect().setWidth(squareSize); 
+        node.getRect().setHeight(squareSize);   
+    }
+
+    private void anchorNode(VisualNode node, double width, double height, int pos){
+        AnchorPane.setTopAnchor(node, (height / 2) - (node.getRect().getHeight() / 2)); 
+        AnchorPane.setLeftAnchor(node, initiaWidthForNode + ((1.6 * node.getRect().getWidth() * pos)));
+    }
+
+    private void resizeArrow(Arrow arrow, double lenght, double width, double height){
+        arrow.setStrokeWidth(height * 0.003);
+        arrow.setLenght(lenght);
+    }
+
+    private void handleToScreenChange(){
+        stack_btn.setOnAction(e -> {
+            SceneManager.changeScene("/fxml/StackVisualizerScreen.fxml");
+        });
+
+        queue_btn.setOnAction(e -> {
+            SceneManager.changeScene("/fxml/QueueVisualizerScreen.fxml");
+        });
     }
 }

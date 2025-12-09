@@ -6,7 +6,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.scene.text.Font;
 
-public class VisualNode extends StackPane {
+public final class VisualNode extends StackPane {
     private Rectangle rect;
     private Text text;
 

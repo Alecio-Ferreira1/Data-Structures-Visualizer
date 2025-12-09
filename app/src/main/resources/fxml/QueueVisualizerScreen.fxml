@@ -11,7 +11,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<HBox stylesheets="@../css/style.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1">
+<HBox stylesheets="@../css/style.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.data_structures_visualizer.controllers.QueueVisualizerController">
    <children>
       <VBox alignment="TOP_CENTER" nodeOrientation="LEFT_TO_RIGHT" prefHeight="738.0" prefWidth="160.0" style="-fx-border-width: 2; -fx-border-color: black;">
          <children>
@@ -22,17 +22,17 @@
                         <Font size="24.0" />
                      </font>
                   </Label>
-                  <Button alignment="CENTER" mnemonicParsing="false" prefHeight="39.0" prefWidth="156.0" styleClass="left-panel-button" text="LISTAS">
+                  <Button fx:id="list_btn" alignment="CENTER" mnemonicParsing="false" prefHeight="39.0" prefWidth="156.0" styleClass="left-panel-button" text="LISTAS">
                      <font>
                         <Font size="18.0" />
                      </font>
                   </Button>
-                  <Button mnemonicParsing="false" prefHeight="39.0" prefWidth="156.0" styleClass="left-panel-button" text="PILHAS">
+                  <Button fx:id="stack_btn" mnemonicParsing="false" prefHeight="39.0" prefWidth="156.0" styleClass="left-panel-button" text="PILHAS">
                      <font>
                         <Font size="18.0" />
                      </font>
                   </Button>
-                  <Button mnemonicParsing="false" prefHeight="39.0" prefWidth="156.0" styleClass="left-panel-button" text="FILAS">
+                  <Button fx:id="queue_btn" mnemonicParsing="false" prefHeight="39.0" prefWidth="156.0" styleClass="left-panel-button" text="FILAS">
                      <font>
                         <Font size="18.0" />
                      </font>
@@ -87,8 +87,8 @@
          <bottom>
             <HBox alignment="CENTER" prefHeight="100.0" prefWidth="1067.0" spacing="20.0" BorderPane.alignment="CENTER">
                <children>
-                  <Slider id="speed_visualization_slider" prefHeight="14.0" prefWidth="182.0" />
-                  <Label text="1.0x">
+                  <Slider id="speed_visualization_slider" fx:id="speed_visualization_slider" prefHeight="14.0" prefWidth="182.0" />
+                  <Label fx:id="speed_visualization_label" text="1.0x">
                      <font>
                         <Font size="16.0" />
                      </font>
@@ -109,7 +109,7 @@
             </HBox>
          </bottom>
          <center>
-            <AnchorPane id="visualization_area" prefHeight="831.0" prefWidth="690.0" style="-fx-border-width: 3; -fx-border-color: black;" BorderPane.alignment="CENTER">
+            <AnchorPane id="visualization_area" fx:id="visualization_area" prefHeight="831.0" prefWidth="690.0" style="-fx-border-width: 3; -fx-border-color: black;" BorderPane.alignment="CENTER">
                <BorderPane.margin>
                   <Insets />
                </BorderPane.margin>

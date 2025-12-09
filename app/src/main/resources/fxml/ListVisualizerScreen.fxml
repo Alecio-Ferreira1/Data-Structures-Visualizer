@@ -22,9 +22,9 @@
                         <Font size="24.0" />
                      </font>
                   </Label>
-                  <Button alignment="CENTER" mnemonicParsing="false" prefHeight="39.0" prefWidth="156.0" styleClass="left-panel-button" text="LISTAS" />
-                  <Button mnemonicParsing="false" prefHeight="39.0" prefWidth="156.0" styleClass="left-panel-button" text="PILHAS" />
-                  <Button mnemonicParsing="false" prefHeight="39.0" prefWidth="156.0" styleClass="left-panel-button" text="FILAS" />
+                  <Button fx:id="list_btn" alignment="CENTER" mnemonicParsing="false" prefHeight="39.0" prefWidth="156.0" styleClass="left-panel-button" text="LISTAS" />
+                  <Button fx:id="stack_btn" mnemonicParsing="false" prefHeight="39.0" prefWidth="156.0" styleClass="left-panel-button" text="PILHAS" />
+                  <Button fx:id="queue_btn" mnemonicParsing="false" prefHeight="39.0" prefWidth="156.0" styleClass="left-panel-button" text="FILAS" />
                </children>
             </VBox>
             <VBox prefHeight="200.0" prefWidth="100.0" spacing="10.0" VBox.vgrow="ALWAYS">
