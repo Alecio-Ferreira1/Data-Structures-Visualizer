@@ -26,6 +26,10 @@ public final class QueueVisualizerController {
     public void initialize(){
         handleToScreenChange();
 
+        visualization_area.layoutBoundsProperty().addListener((obs, odlVal, newVal) -> {
+            fixVisualizationAreaLayout(newVal.getWidth(), newVal.getHeight());
+        });
+
         speed_visualization_slider.valueProperty().addListener((obs, oldValue, newVal) -> {
             speed_visualization_label.setText(String.format("%.1f", 1 + newVal.doubleValue() / 100) + "x");
         });
@@ -39,5 +43,9 @@ public final class QueueVisualizerController {
         stack_btn.setOnAction(e -> {
             SceneManager.changeScene("/fxml/StackVisualizerScreen.fxml");
         });
+    }
+
+    private void fixVisualizationAreaLayout(double width, double height){
+        
     }
 }

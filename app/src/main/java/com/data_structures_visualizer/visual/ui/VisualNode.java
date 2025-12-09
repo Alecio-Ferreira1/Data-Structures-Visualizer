@@ -34,4 +34,10 @@ public final class VisualNode extends StackPane {
     public Rectangle getRect() {
         return rect;
     }
+
+    public void update(double width, double height, double strokeWidth){
+        rect.setWidth(width);
+        rect.setHeight(height);
+        rect.setStrokeWidth(strokeWidth);
+    }
 }

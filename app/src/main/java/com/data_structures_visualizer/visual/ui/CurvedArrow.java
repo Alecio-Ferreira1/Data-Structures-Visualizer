@@ -6,19 +6,14 @@ import javafx.scene.shape.Line;
 import javafx.scene.shape.QuadCurve;
 
 public final class CurvedArrow extends Group {
-    private QuadCurve curve;
-    private Line arrow1;
-    private Line arrow2;
+    private QuadCurve curve = new QuadCurve();
+    private Line arrow1 = new Line();
+    private Line arrow2 = new Line();
 
     public CurvedArrow(double startX, double startY, double endX, double endY){
-        curve = new QuadCurve();
-
         curve.setStroke(Color.BLACK);
         curve.setStrokeWidth(2.0);
         curve.setFill(null);
-
-        arrow1 = new Line();
-        arrow2 = new Line();
 
         arrow1.setStroke(Color.BLACK);
         arrow1.setStrokeWidth(2.0);

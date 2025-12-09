@@ -36,22 +36,23 @@ public final class ListVisualizerController {
     @FXML
     private Button queue_btn;
 
-    private ArrayList<VisualNode> nodes = new ArrayList<VisualNode>();
-    private ArrayList<Arrow> arrows = new ArrayList<Arrow>();
+    private final ArrayList<VisualNode> nodes = new ArrayList<VisualNode>();
+    private final ArrayList<Arrow> arrows = new ArrayList<Arrow>();
     private ArrayList<Arrow> prevArrows;
     private CurvedArrow curvedArrow;  
-    private double initiaWidthForNode = 20;
-    private double squareSize = 50.0;
+    private final double initiaWidthForNode = 20;
+    private final double squareSize = 0.08;
+    private final double spacingBetweenNodes = 0.6;
     private Button selectedButton;
 
     @FXML
     public void initialize(){
         for(int i = 0; i < 10; ++i){  //SÓ PARA TESTE
-            nodes.add(i, new VisualNode(squareSize, squareSize, Integer.toString(i)));
+            nodes.add(i, new VisualNode(625 * squareSize, 625 * squareSize, Integer.toString(i)));
             visualization_area.getChildren().add(nodes.get(i));
 
             if(i < 9){
-                arrows.add(i, new Arrow(squareSize * 0.6));
+                arrows.add(i, new Arrow(spacingBetweenNodes * squareSize));
                 visualization_area.getChildren().add(arrows.get(i));
             }
         } //SÓ PARA TESTE
@@ -134,15 +135,14 @@ public final class ListVisualizerController {
         }
         
         double value = height < width ? height : width;
-        int count = 0;
-
+        
         for(int i = 0; i < nodes.size(); ++i){
-            if(value != 0) resizeVisualNode(nodes.get(i), value);
+            if(value != 0) nodes.get(i).update(value * squareSize, value * squareSize, value * 0.005);
                 
-            anchorNode(nodes.get(i), width, height, count);
+            anchorNode(nodes.get(i), width, height, i);
 
             if(i < arrows.size()){
-                double arrowLenght = 0.6 * nodes.get(i).getRect().getWidth();
+                double arrowLenght = spacingBetweenNodes * nodes.get(i).getRect().getWidth();
 
                 resizeArrow(arrows.get(i), arrowLenght, width, height);
                     
@@ -154,11 +154,9 @@ public final class ListVisualizerController {
                 AnchorPane.setLeftAnchor(
                     arrows.get(i), 
                     (initiaWidthForNode + nodes.get(i).getRect().getWidth() + 
-                    (1.6 * nodes.get(i).getRect().getWidth()) * count)
+                    ((1 + spacingBetweenNodes) * nodes.get(i).getRect().getWidth()) * i)
                 );
             }
-
-            count++;
         }
     }
 
@@ -173,15 +171,14 @@ public final class ListVisualizerController {
         }
 
         double value = height < width ? height : width;
-        int count = 0;
-
+        
         for(int i = 0; i < nodes.size(); ++i){
-            if(value != 0) resizeVisualNode(nodes.get(i), value);
+            if(value != 0) nodes.get(i).update(value * squareSize, value * squareSize, value * 0.005);
                 
-            anchorNode(nodes.get(i), width, height, count);
+            anchorNode(nodes.get(i), width, height, i);
 
             if(i < arrows.size()){
-                double arrowLenght = 0.6 * nodes.get(i).getRect().getWidth();
+                double arrowLenght = spacingBetweenNodes * nodes.get(i).getRect().getWidth();
 
                 resizeArrow(arrows.get(i), arrowLenght, width, height);
 
@@ -201,7 +198,7 @@ public final class ListVisualizerController {
                 AnchorPane.setLeftAnchor(
                     arrows.get(i), 
                     (initiaWidthForNode + nodes.get(i).getRect().getWidth() + 
-                    (1.6 * nodes.get(i).getRect().getWidth()) * count)
+                    ((1 + spacingBetweenNodes) * nodes.get(i).getRect().getWidth()) * i)
                 );
 
                 AnchorPane.setTopAnchor(
@@ -212,11 +209,9 @@ public final class ListVisualizerController {
                 AnchorPane.setLeftAnchor(
                     prevArrows.get(i), 
                     (initiaWidthForNode + nodes.get(i).getRect().getWidth() + 
-                    (1.6 * nodes.get(i).getRect().getWidth()) * count)
+                    ((1 + spacingBetweenNodes) * nodes.get(i).getRect().getWidth()) * i)
                 );
             }
-
-            count++;
         }
     }
 
@@ -242,16 +237,13 @@ public final class ListVisualizerController {
             });
         }
     }
-
-    private void resizeVisualNode(VisualNode node, double value){
-        squareSize = value * 0.08;
-        node.getRect().setWidth(squareSize); 
-        node.getRect().setHeight(squareSize);   
-    }
-
+    
     private void anchorNode(VisualNode node, double width, double height, int pos){
         AnchorPane.setTopAnchor(node, (height / 2) - (node.getRect().getHeight() / 2)); 
-        AnchorPane.setLeftAnchor(node, initiaWidthForNode + ((1.6 * node.getRect().getWidth() * pos)));
+        AnchorPane.setLeftAnchor(
+            node, 
+            initiaWidthForNode + (((1 + spacingBetweenNodes) * node.getRect().getWidth() * pos))
+        );
     }
 
     private void resizeArrow(Arrow arrow, double lenght, double width, double height){

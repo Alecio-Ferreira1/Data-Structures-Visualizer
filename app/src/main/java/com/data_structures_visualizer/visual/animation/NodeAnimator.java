@@ -11,7 +11,7 @@ import javafx.animation.Timeline;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 
-public class NodeAnimator {
+public final class NodeAnimator {
     private static final Map<Rectangle, Timeline> activeTimeLines = new HashMap<>();
 
     public static void startHighlight(Rectangle rect, int speedMillis, Color highlightColor){

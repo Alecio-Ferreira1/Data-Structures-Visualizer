@@ -1,14 +1,56 @@
 package com.data_structures_visualizer.visual.ui;
 
 import javafx.scene.Group;
+import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
 
-public class StackBase extends Group {
-    Line line1 = new Line();
-    Line line2 = new Line();
-    Line line3 = new Line();
+public final class StackBase extends Group {
+    Line left = new Line();
+    Line basis = new Line();
+    Line right = new Line();
+    double height;
+    double width;
 
-    public StackBase(){
-        
+    public StackBase(double width, double height, double strokeWidth){
+        this.width = width;
+        this.height = height;
+
+        left.setStroke(Color.BLACK);
+        basis.setStroke(Color.BLACK);
+        right.setStroke(Color.BLACK);
+
+        getChildren().addAll(left, basis, right);
+        update(width, height, strokeWidth);
+    }
+
+    public void update(double width, double height, double strokeWidth){
+        this.width = width;
+        this.height = height;
+
+        left.setStrokeWidth(strokeWidth);
+        left.setStartX(0);
+        left.setStartY(0);
+        left.setEndX(0);
+        left.setEndY(height);  
+
+        basis.setStrokeWidth(strokeWidth);
+        basis.setStartX(0);
+        basis.setStartY(height);
+        basis.setEndX(width);
+        basis.setEndY(height); 
+
+        right.setStrokeWidth(strokeWidth);
+        right.setStartX(width);
+        right.setStartY(0);
+        right.setEndX(width);
+        right.setEndY(height); 
+    }
+
+    public double getWidth(){
+        return width;
+    }
+
+    public double getHeight(){
+        return height;
     }
 }
