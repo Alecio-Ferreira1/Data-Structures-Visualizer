@@ -6,6 +6,8 @@ public class DoublyLikedList<T> implements List<T> {
   private int lenght = 0;
 
   public DoublyLikedList(T startValue){
+    if(startValue == null) return;
+
     createList(new Node<T>(startValue));
   }
 

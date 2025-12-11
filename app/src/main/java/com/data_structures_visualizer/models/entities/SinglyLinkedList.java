@@ -6,6 +6,8 @@ public class SinglyLinkedList<T> implements List<T>{
   private int lenght = 0;
 
   public SinglyLinkedList(T startValue){
+    if(startValue == null) return;
+
     createList(new Node<T>(startValue));
   }
 

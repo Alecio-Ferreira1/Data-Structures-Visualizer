@@ -27,7 +27,7 @@
     -fx-background-color: #00FF00;
 }
 
-.top-button{
+.top-button, .standard-dark-gray-button{
     background-color: #009900;
     -fx-background-color: #009900;
     font-size: 1.3em;

@@ -34,12 +34,11 @@
                         <Font size="24.0" />
                      </font>
                   </Label>
-                  <Button mnemonicParsing="false" prefHeight="39.0" prefWidth="156.0" styleClass="left-panel-button" text="CRIAR " />
-                  <Button mnemonicParsing="false" prefHeight="39.0" prefWidth="156.0" styleClass="left-panel-button" text="INSERIR NÓ" />
-                  <Button mnemonicParsing="false" prefHeight="39.0" prefWidth="156.0" styleClass="left-panel-button" text="EXCLUIR NÓ" />
-                  <Button mnemonicParsing="false" prefHeight="39.0" prefWidth="156.0" styleClass="left-panel-button" text="BUSCAR VALOR" />
-                  <Button mnemonicParsing="false" prefHeight="39.0" prefWidth="156.0" styleClass="left-panel-button" text="PERCORRER" />
-                  <Button mnemonicParsing="false" prefHeight="39.0" prefWidth="156.0" styleClass="left-panel-button" text="LIMPAR" />
+                  <Button fx:id="create_btn" mnemonicParsing="false" prefHeight="39.0" prefWidth="156.0" styleClass="left-panel-button" text="CRIAR " />
+                  <Button fx:id="insert_node_btn" mnemonicParsing="false" prefHeight="39.0" prefWidth="156.0" styleClass="left-panel-button" text="INSERIR NÓ" />
+                  <Button fx:id="delete_node_btn" mnemonicParsing="false" prefHeight="39.0" prefWidth="156.0" styleClass="left-panel-button" text="EXCLUIR NÓ" />
+                  <Button fx:id="search_value_btn" mnemonicParsing="false" prefHeight="39.0" prefWidth="156.0" styleClass="left-panel-button" text="BUSCAR VALOR" />
+                  <Button fx:id="clear_btn" mnemonicParsing="false" prefHeight="39.0" prefWidth="156.0" styleClass="left-panel-button" text="LIMPAR" />
                </children>
                <VBox.margin>
                   <Insets />

@@ -75,11 +75,10 @@ public final class StackVisualizerController {
         AnchorPane.setLeftAnchor(stackBase, (width / 2) - (stackBase.getWidth() / 2));
 
         double yOffset = 0.015 * height;
-        double initialHeight = (0.85 * height) - yOffset;
-        double value = height < width ? height : width;
-
+        double initialHeight = updatedHeight - yOffset;
+        
         for(int i = 0; i < nodes.size(); ++i){
-            nodes.get(i).update(value * squareSize, value * squareSize, value * 0.005);
+            nodes.get(i).update(height * squareSize, height * squareSize, height * 0.005);
             
             AnchorPane.setTopAnchor(
                 nodes.get(i), 
