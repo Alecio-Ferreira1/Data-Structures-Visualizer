@@ -46,22 +46,22 @@
                         <Font size="24.0" />
                      </font>
                   </Label>
-                  <Button mnemonicParsing="false" prefHeight="39.0" prefWidth="156.0" styleClass="left-panel-button" text="CRIAR">
+                  <Button fx:id="create_btn" mnemonicParsing="false" prefHeight="39.0" prefWidth="156.0" styleClass="left-panel-button" text="CRIAR">
                      <font>
                         <Font size="18.0" />
                      </font>
                   </Button>
-                  <Button mnemonicParsing="false" prefHeight="39.0" prefWidth="156.0" styleClass="left-panel-button" text="EMPILHAR">
+                  <Button fx:id="push_btn" mnemonicParsing="false" prefHeight="39.0" prefWidth="156.0" styleClass="left-panel-button" text="EMPILHAR">
                      <font>
                         <Font size="18.0" />
                      </font>
                   </Button>
-                  <Button mnemonicParsing="false" prefHeight="39.0" prefWidth="156.0" styleClass="left-panel-button" text="DESEMPILHAR">
+                  <Button fx:id="pop_btn" mnemonicParsing="false" prefHeight="39.0" prefWidth="156.0" styleClass="left-panel-button" text="DESEMPILHAR">
                      <font>
                         <Font size="18.0" />
                      </font>
                   </Button>
-                  <Button mnemonicParsing="false" prefHeight="39.0" prefWidth="156.0" styleClass="left-panel-button" text="LIMPAR">
+                  <Button fx:id="clear_btn" mnemonicParsing="false" prefHeight="39.0" prefWidth="156.0" styleClass="left-panel-button" text="LIMPAR">
                      <font>
                         <Font size="18.0" />
                      </font>

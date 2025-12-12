@@ -8,6 +8,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 public class MiniInputDialogController {
@@ -51,7 +52,7 @@ public class MiniInputDialogController {
     }
 
     public Boolean validateInput(String text){
-        return (text.length() < maxDigits && text.matches("\\d+"));
+        return (text.length() <= maxDigits && text.matches("\\d+"));
     }
 
     public void handleWithInputValidation(){
@@ -64,6 +65,8 @@ public class MiniInputDialogController {
 
         else{
             Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.initOwner(stage);
+            alert.initModality(Modality.WINDOW_MODAL);
             alert.setHeaderText("Valor inválido!");
             alert.setContentText(warningMessage);
             alert.showAndWait();

@@ -5,7 +5,7 @@ public class Queue<T> {
   private Node<T> last;
   private int lenght = 0;
 
-  Queue(T startValue){
+  public Queue(T startValue){
     if(startValue == null) return;
 
     Node<T> node = new Node<T>(startValue);

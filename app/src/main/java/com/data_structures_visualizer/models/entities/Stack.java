@@ -4,7 +4,7 @@ public class Stack<T> {
   private Node<T> top;
   private int lenght = 0;
 
-  Stack(T startValue){
+  public Stack(T startValue){
     top = startValue == null ? null : new Node<T>(startValue);
     lenght = startValue == null ? 0 : 1;
   }

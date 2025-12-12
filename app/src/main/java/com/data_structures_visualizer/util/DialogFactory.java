@@ -23,7 +23,7 @@ public final class DialogFactory {
     public static class ConfirmDialog{
         public static void show(String message, Runnable onYes){
             Stage stage = new Stage();
-            
+
             stage.setResizable(false);
             stage.initModality(Modality.APPLICATION_MODAL);
 

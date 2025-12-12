@@ -8,10 +8,13 @@ import com.data_structures_visualizer.models.entities.DoublyLikedList;
 import com.data_structures_visualizer.models.entities.SinglyLinkedList;
 import com.data_structures_visualizer.util.DialogFactory;
 import com.data_structures_visualizer.util.SceneManager;
+import com.data_structures_visualizer.util.Util;
 import com.data_structures_visualizer.visual.animation.NodeAnimator;
 import com.data_structures_visualizer.visual.ui.Arrow;
+import com.data_structures_visualizer.visual.ui.ArrowLabel;
 import com.data_structures_visualizer.visual.ui.CurvedArrow;
 import com.data_structures_visualizer.visual.ui.VisualNode;
+import com.data_structures_visualizer.visual.ui.ArrowLabel.ArrowPosition;
 
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -63,17 +66,19 @@ public final class ListVisualizerController {
     private final ArrayList<Arrow> arrows = new ArrayList<Arrow>();
     private ArrayList<Arrow> prevArrows;
     private CurvedArrow curvedArrow;  
-    private final double initiaWidthForNode = 0.015;
+    private final double xOffsetForNodes = 0.015;
     private final double squareSize = 0.075;
     private final double spacingBetweenNodes = 0.6;
     private Button selectedButton;
     private final int listMaxLimit = 15;
+    private ArrowLabel headLabel;
+    private ArrowLabel tailLabel;
 
     private final SinglyLinkedList<Integer> singlyLinkedList = new SinglyLinkedList<Integer>(null);
     private final DoublyLikedList<Integer> doublyLikedList = new DoublyLikedList<Integer>(null);
     private final CircularLinkedList<Integer> circularLinkedList = new CircularLinkedList<Integer>(null);
 
-    private final static class SelectionWindowDialog{
+    private static class SelectionWindowDialog{
         public static void show(String message, Runnable opt1, Runnable opt2, Runnable opt3){
             Stage stage = new Stage();
             stage.initModality(Modality.APPLICATION_MODAL);
@@ -120,6 +125,12 @@ public final class ListVisualizerController {
 
     @FXML
     public void initialize(){
+        headLabel = new ArrowLabel(spacingBetweenNodes * squareSize * 625, "CABEÇA", 15);
+        headLabel.setArrowPosition(ArrowPosition.BELOW);
+
+        tailLabel = new ArrowLabel(spacingBetweenNodes * squareSize * 625, "CAUDA", 15);
+        tailLabel.setArrowPosition(ArrowPosition.BELOW);
+
         for(int i = 0; i < 10; ++i){ 
             nodes.add(i, new VisualNode(625 * squareSize, 625 * squareSize, Integer.toString(i)));
             visualization_area.getChildren().add(nodes.get(i));
@@ -195,7 +206,16 @@ public final class ListVisualizerController {
         selectedButton = btn;
     }
 
+    private void removeCurvedArrow(){
+        if(curvedArrow != null){
+            visualization_area.getChildren().remove(curvedArrow);
+            curvedArrow = null;
+        }
+    }
+
     private void singlyListVisualization(double width, double height){
+        removeCurvedArrow();
+
         if(prevArrows != null){
             for(Arrow arrow : prevArrows){
                 visualization_area.getChildren().remove(arrow);
@@ -203,23 +223,18 @@ public final class ListVisualizerController {
             }
         }
 
-        if(curvedArrow != null){
-            visualization_area.getChildren().remove(curvedArrow);
-            curvedArrow = null;
-        }
+        final double value = height < width ? height : width;
+        final double nodeWidth = value * squareSize;
+        final double arrowLenght = spacingBetweenNodes * nodeWidth;
 
-        double value = height < width ? height : width;
+        anchorArrowLabels(arrowLenght * 1.7, squareSize * height / 3, width, height);
         
         for(int i = 0; i < nodes.size(); ++i){
-           nodes.get(i).update(value * squareSize, value * squareSize, value * 0.005);
-
-            double nodeWidth = value * squareSize;
+           nodes.get(i).update(nodeWidth, nodeWidth, value * 0.005);
                 
             anchorNode(nodes.get(i), width, height, i);
 
             if(i < arrows.size()){
-                double arrowLenght = spacingBetweenNodes * nodeWidth;
-
                 resizeArrow(arrows.get(i), arrowLenght, width, height);
                     
                 AnchorPane.setTopAnchor(
@@ -229,7 +244,7 @@ public final class ListVisualizerController {
 
                 AnchorPane.setLeftAnchor(
                     arrows.get(i), 
-                    ((initiaWidthForNode * width) + nodeWidth + 
+                    ((xOffsetForNodes * width) + nodeWidth + 
                     ((1 + spacingBetweenNodes) * nodeWidth) * i)
                 );
             }
@@ -237,10 +252,7 @@ public final class ListVisualizerController {
     }
 
     private void doublyListVisualization(double width, double height){
-        if(curvedArrow != null){
-            visualization_area.getChildren().remove(curvedArrow);
-            curvedArrow = null;
-        }
+        removeCurvedArrow();
 
         if(prevArrows == null){
             prevArrows = new ArrayList<Arrow>();
@@ -248,6 +260,9 @@ public final class ListVisualizerController {
 
         double value = height < width ? height : width;
         double nodeWidth = squareSize * value;
+        double arrowLenght = spacingBetweenNodes * nodeWidth;
+
+        anchorArrowLabels(arrowLenght * 1.7, squareSize * height / 3, width, height);
 
         for(int i = 0; i < nodes.size(); ++i){
             nodes.get(i).update(value * squareSize, value * squareSize, value * 0.005);
@@ -255,8 +270,6 @@ public final class ListVisualizerController {
             anchorNode(nodes.get(i), width, height, i);
 
             if(i < arrows.size()){
-                double arrowLenght = spacingBetweenNodes * nodeWidth;
-
                 resizeArrow(arrows.get(i), arrowLenght, width, height);
 
                 if(i >= prevArrows.size()){
@@ -274,7 +287,7 @@ public final class ListVisualizerController {
 
                 AnchorPane.setLeftAnchor(
                     arrows.get(i), 
-                    ((initiaWidthForNode * width) + nodeWidth + 
+                    ((xOffsetForNodes * width) + nodeWidth + 
                     ((1 + spacingBetweenNodes) * nodeWidth) * i)
                 );
 
@@ -285,7 +298,7 @@ public final class ListVisualizerController {
 
                 AnchorPane.setLeftAnchor(
                     prevArrows.get(i), 
-                    ((initiaWidthForNode * width) + nodeWidth + 
+                    ((xOffsetForNodes * width) + nodeWidth + 
                     ((1 + spacingBetweenNodes) * nodeWidth) * i)
                 );
             }
@@ -328,9 +341,9 @@ public final class ListVisualizerController {
     
     private void anchorNode(VisualNode node, double width, double height, int pos){
         AnchorPane.setTopAnchor(node, (height / 2) - (node.getRect().getHeight() / 2)); 
-        AnchorPane.setLeftAnchor(
-            node, 
-            (initiaWidthForNode * width) + (((1 + spacingBetweenNodes) * node.getRect().getWidth() * pos))
+        AnchorPane.setLeftAnchor(node, 
+            (xOffsetForNodes * width) + 
+            (((1 + spacingBetweenNodes) * node.getRect().getWidth() * pos))
         );
     }
 
@@ -351,7 +364,8 @@ public final class ListVisualizerController {
 
     private void setupOperations(){
         create_btn.setOnAction(e -> {
-            DialogFactory.showInputDialog("Insira o tamanho da lista: ", (int lenght) -> {
+            DialogFactory.showInputDialog(
+                "Insira o tamanho da lista: ", (int lenght) -> {
                 createList(lenght);
                 fixVisualizationAreaLayout(visualization_area.getWidth(), visualization_area.getHeight());
             });
@@ -366,20 +380,20 @@ public final class ListVisualizerController {
         });
      
         search_value_btn.setOnAction(e -> {
-            fixVisualizationAreaLayout(visualization_area.getWidth(), visualization_area.getHeight());
+            
         });
          
         clear_btn.setOnAction(e -> {
-            DialogFactory.ConfirmDialog.show("Tem certeza que deseja limpar a área de visualização?", () -> {
+            DialogFactory.ConfirmDialog.show(
+                "Tem certeza que deseja limpar a área de visualização?", () -> {
                 clearVisualization();
-                fixVisualizationAreaLayout(visualization_area.getWidth(), visualization_area.getHeight());
             });
         });
     }
 
     private void createList(int lenght){
         if(lenght > listMaxLimit){
-            showAlertForExcidingValue();
+            Util.showAlertForExceedingValue(listMaxLimit);
             return;
         }
 
@@ -402,13 +416,6 @@ public final class ListVisualizerController {
         }
     }
 
-    private void showAlertForExcidingValue(){
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setHeaderText("Tamanho máximo excedido.");
-        alert.setContentText(String.format("Valor máximo permitido: %d", listMaxLimit));
-        alert.showAndWait();
-    }
-
     private void clearVisualization(){
         visualization_area.getChildren().clear();
         nodes.clear();
@@ -419,4 +426,54 @@ public final class ListVisualizerController {
             prevArrows.clear();
         }
     }
+
+    private void anchorArrowLabels(double arrowLenght, double fontSize, double width, double height){
+        if(nodes.isEmpty()){
+            visualization_area.getChildren().remove(headLabel);
+            visualization_area.getChildren().remove(tailLabel);
+            return;
+        }
+
+        if(!visualization_area.getChildren().contains(headLabel)){
+            visualization_area.getChildren().add(headLabel);
+        }
+
+        if(!visualization_area.getChildren().contains(tailLabel)){
+            visualization_area.getChildren().add(tailLabel);
+        }
+
+        final double value = height < width ? height : width;
+        final double nodeWidth = squareSize * value; 
+        final double xOffset = 0.01 * value;
+        final double labelsYoffset = 1.7;
+
+        headLabel.setText("CABEÇA");
+        headLabel.update(arrowLenght, headLabel.getText(), fontSize);
+
+        if(nodes.size() == 1){
+            visualization_area.getChildren().remove(tailLabel);
+            headLabel.setText("CABEÇA\nCAUDA");
+        }
+
+        if(visualization_area.getChildren().contains(tailLabel)){
+            tailLabel.update(arrowLenght, "CAUDA", fontSize);
+
+            AnchorPane.setTopAnchor(
+                tailLabel, ((height / 2) - (nodeWidth / 2)) - ((1 + labelsYoffset) * arrowLenght)
+            );
+
+            AnchorPane.setLeftAnchor(
+                tailLabel, xOffsetForNodes + (nodeWidth / 2) + ((1 + spacingBetweenNodes) * nodeWidth * (nodes.size() - 1))
+                - xOffset
+            );
+        }
+            
+        AnchorPane.setTopAnchor(
+            headLabel, ((height / 2) - (nodeWidth / 2)) - ((1 + labelsYoffset) * arrowLenght)
+        );
+
+        AnchorPane.setLeftAnchor(
+            headLabel, xOffsetForNodes + (nodeWidth / 2) - xOffset
+        );
+    }   
 }
