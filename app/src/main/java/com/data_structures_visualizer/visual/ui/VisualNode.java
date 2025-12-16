@@ -35,6 +35,10 @@ public final class VisualNode extends StackPane {
         return rect;
     }
 
+    public String getText(){
+        return text.getText();
+    }
+
     public void update(double width, double height, double strokeWidth){
         rect.setWidth(width);
         rect.setHeight(height);

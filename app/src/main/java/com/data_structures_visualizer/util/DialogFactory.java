@@ -1,7 +1,6 @@
 package com.data_structures_visualizer.util;
 
-import java.util.function.Consumer;
-import java.util.function.IntConsumer;
+import java.util.function.BiConsumer;
 
 import com.data_structures_visualizer.controllers.MiniInputDialogController;
 
@@ -63,7 +62,7 @@ public final class DialogFactory {
         }
     } 
 
-    public static void showInputDialog(String message,  IntConsumer onConfirm){
+    public static void showInputDialog(String message, String message2,  BiConsumer<Integer, Integer> onConfirm){
         try {
             FXMLLoader loader = new FXMLLoader(DialogFactory.class.getResource("/fxml/MiniInputDialog.fxml"));
             Parent root = loader.load();
@@ -75,6 +74,7 @@ public final class DialogFactory {
             stage.setResizable(false);
 
             controller.setMessage(message);
+            controller.setOtherMessage(message2);
             controller.setStage(stage);
             controller.setOnconfirm(onConfirm);
 

@@ -1,46 +1,87 @@
 package com.data_structures_visualizer.visual.animation;
 
-import javafx.util.Duration;
-
 import java.util.HashMap;
 import java.util.Map;
 
+import com.data_structures_visualizer.visual.ui.VisualNode;
+
+import javafx.animation.Animation;
+import javafx.animation.FadeTransition;
+import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
+import javafx.animation.ParallelTransition;
+import javafx.animation.ScaleTransition;
 import javafx.animation.Timeline;
+import javafx.animation.TranslateTransition;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.util.Duration;
 
 public final class NodeAnimator {
     private static final Map<Rectangle, Timeline> activeTimeLines = new HashMap<>();
 
-    public static void startHighlight(Rectangle rect, int speedMillis, Color highlightColor){
-        if(activeTimeLines.containsKey(rect)) return;
+    public static Animation startHighlight(Rectangle rect, int speedMillis, Color highlightColor){
+        if(activeTimeLines.containsKey(rect)) return null;
 
-        Timeline timeline = new Timeline(
-            new KeyFrame(
-                Duration.ZERO,
-                new KeyValue(rect.strokeProperty(), highlightColor)
-            ),
-            new KeyFrame(
-                Duration.millis(speedMillis), 
-                new KeyValue(rect.strokeProperty(), Color.BLACK)
-            )
-        );
-
-        timeline.setCycleCount(speedMillis);
-        timeline.setAutoReverse(true);
-        timeline.play();
+        Timeline timeline = (Timeline) animateStroke(rect, (Color) rect.getStroke(), highlightColor, speedMillis, true);
 
         activeTimeLines.put(rect, timeline);
+        return timeline;
     }    
 
-    public static void stopHighlight(Rectangle rect){
+    public static Animation stopHighlight(Rectangle rect){
         Timeline timeline = activeTimeLines.remove(rect);
 
         if(timeline != null){
             timeline.stop();
-            rect.setStroke(Color.BLACK);
         }
+
+        return (Timeline) animateStroke(rect, (Color) rect.getStroke(), Color.BLACK, 300, false);
+    }
+
+    public static Animation animateMove(VisualNode node, double x, double y, double seconds){
+        TranslateTransition tt = new TranslateTransition(Duration.seconds(seconds), node);
+        tt.setToX(x);
+        tt.setToY(y);
+        return tt;
+    }
+
+    public static ParallelTransition emergeEffect(VisualNode node, double seconds, boolean spawn){
+        ScaleTransition scaleTransition = new ScaleTransition(
+            Duration.seconds(seconds), node
+        );
+
+        double minScale = 0.0001;
+        double from = spawn ? minScale : 1;
+        double to = spawn ? 1 : minScale;
+
+        scaleTransition.setFromX(from);
+        scaleTransition.setFromY(from);
+        scaleTransition.setToX(to);
+        scaleTransition.setToY(to);
+        scaleTransition.setInterpolator(spawn ? Interpolator.EASE_OUT : Interpolator.EASE_IN);
+
+        FadeTransition fadeTransition = AnimationUtils.fadeTransition(node, seconds, !spawn);
+
+        return new ParallelTransition(scaleTransition, fadeTransition);
+    }
+
+    public static Animation animateStroke(Rectangle rectangle, Color fromColor, Color toColor, int durationMillis, boolean repeat){
+        Timeline timeline = new Timeline(
+            new KeyFrame(Duration.ZERO, new KeyValue(rectangle.strokeProperty(), fromColor)),
+            new KeyFrame(Duration.millis(durationMillis), new KeyValue(rectangle.strokeProperty(), toColor))
+        );
+
+        if(repeat){
+            timeline.setCycleCount(Timeline.INDEFINITE);
+            timeline.setAutoReverse(true);    
+        }
+
+        else{
+            timeline.setCycleCount(1);
+        }
+
+        return timeline;
     }
 }

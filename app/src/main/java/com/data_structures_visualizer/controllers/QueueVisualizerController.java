@@ -3,6 +3,8 @@ package com.data_structures_visualizer.controllers;
 import java.util.ArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 
+import com.data_structures_visualizer.config.QueueVisualizerConfig;
+import com.data_structures_visualizer.config.StackVisualizerConfig;
 import com.data_structures_visualizer.models.entities.Queue;
 import com.data_structures_visualizer.util.DialogFactory;
 import com.data_structures_visualizer.util.SceneManager;
@@ -10,7 +12,6 @@ import com.data_structures_visualizer.util.Util;
 import com.data_structures_visualizer.visual.ui.ArrowLabel;
 import com.data_structures_visualizer.visual.ui.ArrowLabel.ArrowPosition;
 import com.data_structures_visualizer.visual.ui.QueueDelimiter;
-import com.data_structures_visualizer.visual.ui.StackBase;
 import com.data_structures_visualizer.visual.ui.VisualNode;
 
 import javafx.application.Platform;
@@ -18,6 +19,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.layout.AnchorPane;
 
 public final class QueueVisualizerController {
@@ -44,9 +46,6 @@ public final class QueueVisualizerController {
 
     private QueueDelimiter queueDelimiter;
     private final ArrayList<VisualNode> nodes = new ArrayList<VisualNode>();
-    private final double squareSize = 0.08;
-    private final double spacingBetweenNodes = 0.15;
-    private final int queueMaxLimit = 16;
     private ArrowLabel startLabel;
     private ArrowLabel endLabel;
 
@@ -54,14 +53,26 @@ public final class QueueVisualizerController {
 
     @FXML
     public void initialize(){
-        startLabel = new ArrowLabel(spacingBetweenNodes * squareSize * 625, "INÍCIO", 15);
+        startLabel = new ArrowLabel(
+            QueueVisualizerConfig.spacingBetweenNodes * QueueVisualizerConfig.squareSize * 625, 
+            "INÍCIO", 15
+        );
+
         startLabel.setArrowPosition(ArrowPosition.BELOW);
 
-        endLabel = new ArrowLabel(spacingBetweenNodes * squareSize * 625, "FIM", 15);
+        endLabel = new ArrowLabel(
+            QueueVisualizerConfig.spacingBetweenNodes * QueueVisualizerConfig.squareSize * 625,
+             "FIM", 15
+        );
+
         endLabel.setArrowPosition(ArrowPosition.BELOW);
 
         for(int i = 0; i < 13; ++i){  
-            nodes.add(i, new VisualNode(625 * squareSize, 625 * squareSize, Integer.toString(i)));
+            nodes.add(i, new VisualNode(
+                625 * QueueVisualizerConfig.squareSize, 
+                625 * QueueVisualizerConfig.squareSize, Integer.toString(i)
+            ));
+
             visualization_area.getChildren().add(nodes.get(i));
         } 
 
@@ -108,7 +119,10 @@ public final class QueueVisualizerController {
             double value = height < width ? height : width;
 
             for(int i = 0; i < nodes.size(); ++i){
-                nodes.get(i).update(value * squareSize, value * squareSize, value * 0.005);
+                nodes.get(i).update(
+                    value * QueueVisualizerConfig.squareSize, 
+                    value * QueueVisualizerConfig.squareSize, value * 0.005
+                );
                 
                 AnchorPane.setTopAnchor(
                     nodes.get(i), 
@@ -118,17 +132,21 @@ public final class QueueVisualizerController {
                 AnchorPane.setLeftAnchor(
                     nodes.get(i), 
                     xOffset + (width / 2) - (queueDelimiter.getWidth() / 2) +
-                    ((1 + spacingBetweenNodes) * nodes.get(i).getRect().getWidth() * i)
+                    ((1 + QueueVisualizerConfig.spacingBetweenNodes) * nodes.get(i).getRect().getWidth() * i)
                 );
             }
 
-            anchorArrowLabels(squareSize * width * 0.6, squareSize * height / 3, width, height);
+            anchorArrowLabels(
+                QueueVisualizerConfig.squareSize * width * 0.6, 
+                QueueVisualizerConfig.squareSize * height / 3, 
+                width, height
+            );
         });
     }
 
     private void setupOperations(){
         create_btn.setOnAction(e -> {
-            DialogFactory.showInputDialog("Insira o tamanho da fila: ", (int lenght) -> {
+            DialogFactory.showInputDialog("Insira o tamanho da fila: ", null, (Integer lenght, Integer v) -> {
                 createQueue(lenght);
                 fixVisualizationAreaLayout(visualization_area.getWidth(), visualization_area.getHeight());
             });
@@ -150,8 +168,13 @@ public final class QueueVisualizerController {
     }
 
     private void createQueue(int lenght){
-        if(lenght > queueMaxLimit){
-            Util.showAlertForExceedingValue(queueMaxLimit);
+        if(lenght > StackVisualizerConfig.stackMaxLimit){
+            Util.showAlert(
+                "Não foi possível criar a fila.",
+                String.format("Tamanho máximo permitido: %d", StackVisualizerConfig.stackMaxLimit),
+                AlertType.CONFIRMATION
+            );
+            
             return;
         }
 
@@ -161,11 +184,15 @@ public final class QueueVisualizerController {
             Integer randInt = ThreadLocalRandom.current().nextInt(0, 9999);
 
             queue.enqueue(randInt);
-            nodes.add(new VisualNode(625 * squareSize, 625 * squareSize, String.valueOf(randInt)));
+            nodes.add(new VisualNode(
+                625 * QueueVisualizerConfig.squareSize, 
+                625 * QueueVisualizerConfig.squareSize, 
+                String.valueOf(randInt)
+            ));
+
             visualization_area.getChildren().add(nodes.get(i));
         }
     }
-
    
     private void clearVisualization(){
         for(VisualNode node : nodes){
@@ -193,7 +220,7 @@ public final class QueueVisualizerController {
         }
 
         final double value = height < width ? height : width;
-        final double nodeWidth = squareSize * value; 
+        final double nodeWidth = QueueVisualizerConfig.squareSize * value; 
         final double xOffset = 0.01 * width;
         final double labelsYoffset = 1.7;
 
@@ -214,7 +241,7 @@ public final class QueueVisualizerController {
 
             AnchorPane.setLeftAnchor(
                 endLabel, (nodeWidth / 2 ) + (width / 2) - (queueDelimiter.getWidth() / 2) +
-                ((1 + spacingBetweenNodes) * nodeWidth * (nodes.size() - 1)) 
+                ((1 + QueueVisualizerConfig.spacingBetweenNodes) * nodeWidth * (nodes.size() - 1)) 
             );
         }
             

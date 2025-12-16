@@ -1,11 +1,9 @@
 package com.data_structures_visualizer.visual.ui;
 
-import javafx.scene.Group;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
-import javafx.scene.transform.Rotate;
 
 public class ArrowLabel extends Pane{
     public static enum ArrowPosition{

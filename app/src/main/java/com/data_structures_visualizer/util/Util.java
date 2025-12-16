@@ -1,12 +1,13 @@
 package com.data_structures_visualizer.util;
 
 import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 
 public final class Util {
-    public static void showAlertForExceedingValue(int value){
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setHeaderText("Tamanho máximo excedido.");
-        alert.setContentText(String.format("Valor máximo permitido: %d", value));
+    public static void showAlert(String headerMessage, String message, AlertType alertType){
+        Alert alert = new Alert(alertType);
+        alert.setHeaderText(headerMessage);
+        alert.setContentText(message);
         alert.showAndWait();
     }
 }

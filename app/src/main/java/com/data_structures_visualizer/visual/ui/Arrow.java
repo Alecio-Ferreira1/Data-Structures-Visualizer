@@ -56,6 +56,10 @@ public final class Arrow extends Group{
         return line;
     }
 
+    public Polyline getHeadPolyline(){
+        return head;
+    }
+
     public double getBaseLenght(){
         return baseLenght;
     }
@@ -78,5 +82,13 @@ public final class Arrow extends Group{
             baseLenght, 0.0,
             baseLenght - arrowSize, arrowSize 
         );
+    }
+
+    public static Arrow createInvisble(double lenght){
+        Arrow arrow = new Arrow(lenght);
+        
+        arrow.setOpacity(0);
+        
+        return arrow;
     }
 }

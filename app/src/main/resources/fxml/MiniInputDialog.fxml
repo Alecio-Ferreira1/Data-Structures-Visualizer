@@ -24,9 +24,29 @@
             </TextField>
          </children>
       </HBox>
+      <HBox fx:id="other_input_line" alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="10.0" visible="false">
+         <children>
+            <Label fx:id="message_label2" text="Mensagem 2:" wrapText="true">
+               <font>
+                  <Font size="15.0" />
+               </font>
+            </Label>
+            <TextField fx:id="input_text_field2" prefHeight="29.0" prefWidth="53.0" style="-fx-border-color: black; -fx-border-radius: 4px;">
+               <padding>
+                  <Insets bottom="5.0" left="5.0" top="5.0" />
+               </padding>
+            </TextField>
+         </children>
+         <VBox.margin>
+            <Insets bottom="10.0" />
+         </VBox.margin>
+         <padding>
+            <Insets left="5.0" right="5.0" />
+         </padding>
+      </HBox>
       <HBox alignment="TOP_CENTER" prefHeight="100.0" prefWidth="200.0" spacing="20.0">
          <children>
-            <Button fx:id="send_button" mnemonicParsing="false" style="-fx-background-color: #009900;" styleClass="standard-dark-gray-button" text="Enviar">
+            <Button fx:id="send_button" mnemonicParsing="false" style="-fx-background-color: #009900;" styleClass="standard-dark-gray-button" text="Ok">
                <font>
                   <Font size="14.0" />
                </font>
