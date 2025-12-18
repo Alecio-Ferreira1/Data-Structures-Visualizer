@@ -11,8 +11,10 @@ import com.data_structures_visualizer.models.entities.SinglyLinkedList;
 import com.data_structures_visualizer.util.DialogFactory;
 import com.data_structures_visualizer.util.SceneManager;
 import com.data_structures_visualizer.util.Util;
-import com.data_structures_visualizer.visual.context.list.ListInsertContext;
-import com.data_structures_visualizer.visual.operations.ListInsertOperation;
+import com.data_structures_visualizer.visual.context.list.DeleteContext;
+import com.data_structures_visualizer.visual.context.list.InsertContext;
+import com.data_structures_visualizer.visual.operations.list.DeleteOperation;
+import com.data_structures_visualizer.visual.operations.list.InsertOperation;
 import com.data_structures_visualizer.visual.ui.Arrow;
 import com.data_structures_visualizer.visual.ui.ArrowLabel;
 import com.data_structures_visualizer.visual.ui.CurvedArrow;
@@ -27,6 +29,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.Slider;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
@@ -64,6 +67,18 @@ public final class ListVisualizerController {
     private Button search_value_btn;
     @FXML     
     private Button clear_btn;
+    @FXML
+    private ProgressIndicator visualization_progress;
+    @FXML
+    private Button reset_btn;
+    @FXML
+    private Button step_backward_btn;
+    @FXML
+    private Button pause_btn;
+    @FXML
+    private Button step_forward_btn;
+    @FXML
+    private Button advance_btn;
 
     private final ArrayList<VisualNode> nodes = new ArrayList<VisualNode>();
     private final ArrayList<Arrow> arrows = new ArrayList<Arrow>();
@@ -75,7 +90,7 @@ public final class ListVisualizerController {
     private final SinglyLinkedList<Integer> singlyLinkedList = new SinglyLinkedList<Integer>(null);
     private final DoublyLikedList<Integer> doublyLikedList = new DoublyLikedList<Integer>(null);
     private final CircularLinkedList<Integer> circularLinkedList = new CircularLinkedList<Integer>(null);
-    private AnimationTimeLine animationTimeLine;
+    private AnimationTimeLine animationTimeLine = new AnimationTimeLine();
 
     public enum ListType{
         SINGLY, DOUBLY, CIRCULAR
@@ -140,18 +155,65 @@ public final class ListVisualizerController {
         handleToSelectionListType();
         handleToScreenChange();
         setupOperations();
+        setupControlButtons();
+        setupListeners();
+    }
 
+    private void setupControlButtons(){
+        reset_btn.setOnAction(e -> {
+            animationTimeLine.reset();
+        });
+        
+        step_backward_btn.setOnAction(e -> {
+            animationTimeLine.playPrevious(1.0);
+        });
+        
+        pause_btn.setOnAction(e -> {
+            if(animationTimeLine.isPlaying()){
+                animationTimeLine.pause();   
+            }
+            
+            else{
+                animationTimeLine.play();
+            }
+
+        });
+        
+        step_forward_btn.setOnAction(e -> {
+            animationTimeLine.playNext();
+        });
+        
+        advance_btn.setOnAction(e -> {
+            animationTimeLine.playFast();
+        });
+    }
+
+    private void setupListeners(){
         visualization_area.layoutBoundsProperty().addListener((obs, odlVal, newVal) -> {
             fixVisualizationAreaLayout(newVal.getWidth(), newVal.getHeight());
         });
 
         speed_visualization_slider.valueProperty().addListener((obs, oldValue, newVal) -> {
             speed_visualization_label.setText(String.format("%.1f", 1 + newVal.doubleValue() / 100) + "x");
+            ListVisualizerConfig.speedVisualization = newVal.doubleValue();
+        });
+
+        visualization_progress.progressProperty().bind(animationTimeLine.progressProperty());
+
+        animationTimeLine.setOnFinished(() -> {
+            fixVisualizationAreaLayout(
+                visualization_area.getWidth(),
+                visualization_area.getHeight()
+            );
         });
     }
 
     private void putStartExample(){
         for(int i = 0; i < 10; ++i){ 
+            singlyLinkedList.pushBack(i);
+            doublyLikedList.pushBack(i);
+            circularLinkedList.pushBack(i);
+
             nodes.add(i, new VisualNode(625 * ListVisualizerConfig.squareSize, 
                 625 * ListVisualizerConfig.squareSize, Integer.toString(i))
             );
@@ -267,7 +329,9 @@ public final class ListVisualizerController {
         
         for(int i = 0; i < nodes.size(); ++i){
            nodes.get(i).update(nodeWidth, nodeWidth, value * 0.005);
-                
+           nodes.get(i).setTranslateX(0);
+           nodes.get(i).setTranslateY(0);
+
             anchorNode(nodes.get(i), width, height, i);
 
             if(i < arrows.size()){
@@ -304,7 +368,9 @@ public final class ListVisualizerController {
                 value * ListVisualizerConfig.squareSize, 
                 value * ListVisualizerConfig.squareSize, value * 0.005
             );
-                
+
+            nodes.get(i).setTranslateX(0);
+            nodes.get(i).setTranslateY(0);
             anchorNode(nodes.get(i), width, height, i);
 
             if(i < arrows.size()){
@@ -401,6 +467,14 @@ public final class ListVisualizerController {
     }
 
     private void setupOperations(){
+        setupCreateList();
+        setupInsertNode();
+        setupDeleteNode();
+        setupSearchNode();
+        setupClearVisualization();
+    }
+
+    private void setupCreateList(){
         create_btn.setOnAction(e -> {
             DialogFactory.showInputDialog(
                 "Insira o tamanho da lista: ", null, (Integer lenght, Integer v) -> {
@@ -408,7 +482,9 @@ public final class ListVisualizerController {
                 fixVisualizationAreaLayout(visualization_area.getWidth(), visualization_area.getHeight());
             });
         });
-
+    }
+    
+    private void setupInsertNode(){
         insert_node_btn.setOnAction(e -> {
             SelectionWindowDialog.show(
                 "Selecione o tipo de inserção: ", 
@@ -427,23 +503,41 @@ public final class ListVisualizerController {
                 () -> {
                     DialogFactory.showInputDialog(
                         "Insira o valor para inserir na lista:", 
-                        "Insira a posição: para inserir na lista",
+                        "Insira a posição para inserir na lista: ",
                         (Integer value, Integer pos) -> { insertNode(value, pos); }
                     );
                 }
             );
+        });
+    }
 
-            fixVisualizationAreaLayout(visualization_area.getWidth(), visualization_area.getHeight());
-        });
-     
+    private void setupDeleteNode(){
         delete_node_btn.setOnAction(e -> {
-            fixVisualizationAreaLayout(visualization_area.getWidth(), visualization_area.getHeight());
+            DialogFactory.showVerticalChoiceDialog(
+                "Remover nó da lista.", "Remover por valor", 
+                () -> {
+                    DialogFactory.showInputDialog(
+                        "Insira o valor para remover da lista: ", null, 
+                        (Integer value, Integer v) -> { deleteNode(value, false); }
+                    );
+                }, "Remover por índice", 
+                () -> {
+                     DialogFactory.showInputDialog(
+                        "Insira o índice do elemento para remover: ", null, 
+                        (Integer index, Integer v) -> { deleteNode(index, true); }
+                    );
+                }
+            );
         });
-     
+    }
+
+    private void setupSearchNode(){
         search_value_btn.setOnAction(e -> {
             
         });
-         
+    }
+
+    private void setupClearVisualization(){
         clear_btn.setOnAction(e -> {
             DialogFactory.ConfirmDialog.show(
                 "Tem certeza que deseja limpar a área de visualização?", () -> {
@@ -515,6 +609,7 @@ public final class ListVisualizerController {
         final double labelsYoffset = 1.7;
 
         headLabel.setText("CABEÇA");
+        headLabel.setTranslateX(0);
         headLabel.update(arrowLenght, headLabel.getText(), fontSize);
 
         if(nodes.size() == 1){
@@ -523,6 +618,7 @@ public final class ListVisualizerController {
         }
 
         if(visualization_area.getChildren().contains(tailLabel)){
+            tailLabel.setTranslateX(0);
             tailLabel.update(arrowLenght, "CAUDA", fontSize);
 
             AnchorPane.setTopAnchor(
@@ -555,7 +651,7 @@ public final class ListVisualizerController {
             return false;
         }
 
-        if(pos >= nodes.size()){
+        if(pos > nodes.size()){
             Util.showAlert(
                 "Indíce inválido!",
                 String.format("O valor do índice deve estar entre 0 e %d.", nodes.size()),
@@ -568,24 +664,72 @@ public final class ListVisualizerController {
         return true;
     }
 
-    private ListInsertContext buildInsertContext(int value, int pos){
-        return new ListInsertContext(
+    private boolean validadeDeletion(boolean removeByIndex, int index){
+        if(nodes.isEmpty()){
+            Util.showAlert(
+                "Lista vazia!",
+                "Não há elementos na lista para remover.",
+                AlertType.CONFIRMATION
+            );
+
+            return false;
+        }
+
+        if(removeByIndex && index > (nodes.size() - 1)){
+            Util.showAlert(
+                "Indíxe inválido!",
+                String.format("O valor do índice deve estar entre 0 e %d.", nodes.size() - 1),
+                AlertType.CONFIRMATION
+            );
+
+            return false;
+        }
+
+        return true;
+    }
+
+    private InsertContext buildInsertContext(int value, int pos){
+        return new InsertContext(
             pos, value, getListType(), visualization_area.getWidth(), 
-            visualization_area.getHeight(), nodes.size()
+            visualization_area.getHeight(), nodes.size(), singlyLinkedList,
+            doublyLikedList, circularLinkedList
         );
     }
 
     private void insertNode(int value, int pos){
         if(!validadeInsertion(pos)) return;
 
-        ListInsertContext insertContext = buildInsertContext(value, pos);
+        InsertContext insertContext = buildInsertContext(value, pos);
 
-        animationTimeLine = new AnimationTimeLine();
-
-        ListInsertOperation op = new ListInsertOperation(
-            insertContext, visualization_area, nodes, arrows, prevArrows, curvedArrow
+        InsertOperation op = new InsertOperation(
+            insertContext, visualization_area, nodes, arrows, prevArrows, 
+            curvedArrow, headLabel, tailLabel
         );
 
         op.build(animationTimeLine);
+        animationTimeLine.play();
+    }
+
+    private DeleteContext buildDeleteContext(int value, boolean removeByIndex){
+        return new DeleteContext(
+            value, getListType(), visualization_area.getWidth(), 
+            visualization_area.getHeight(), nodes.size(), removeByIndex,
+            singlyLinkedList, doublyLikedList, circularLinkedList
+        );
+    }
+
+    private void deleteNode(int value, boolean removeByIndex){
+        if(!validadeDeletion(removeByIndex, value)) return;
+
+        DeleteContext deleteContext = buildDeleteContext(value, removeByIndex);
+
+        DeleteOperation op = new DeleteOperation(
+            deleteContext, visualization_area, nodes, arrows, prevArrows, 
+            curvedArrow, headLabel, tailLabel
+        );
+
+        op.build(animationTimeLine);
+
+        animationTimeLine.play();
     }
 }

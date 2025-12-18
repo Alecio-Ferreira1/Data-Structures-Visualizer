@@ -174,17 +174,17 @@ public class CircularLinkedList<T> implements List<T>{
 
   @Override
   public T get(int index) {
-    if(head == null) return null;
+    if(index < 0 || index >= lenght) return null;
 
     Node<T> target = head;
     int i = index;
 
-    while(i > 0 && target.getNext() != head){
+    while(i > 0){
       target = target.getNext();
       --i;
     }
 
-    return i != 0 ? null : target.getValue();
+    return target != null ? target.getValue() : null;
   }
 
   @Override
@@ -197,5 +197,20 @@ public class CircularLinkedList<T> implements List<T>{
     head = null;
     tail = null;
     lenght = 0;
+  }
+
+  @Override
+  public int indexOf(T value){
+    if(head == null) return -1;
+
+    Node<T> target = head;
+    int i = 0;
+
+    while(i < lenght && !target.equals(value)){
+      target = target.getNext();
+      i++;
+    }
+
+    return i == lenght ? -1 : i;
   }
 }

@@ -3,10 +3,16 @@ package com.data_structures_visualizer.visual.animation;
 import java.util.ArrayList;
 
 import javafx.util.Duration;
+import javafx.animation.Animation;
 import javafx.animation.FadeTransition;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
 import javafx.animation.ParallelTransition;
-import javafx.animation.TranslateTransition;
+import javafx.animation.PauseTransition;
+import javafx.animation.Timeline;
+import javafx.beans.value.WritableValue;
 import javafx.scene.Node;
+import javafx.scene.layout.AnchorPane;
 
 public final class AnimationUtils {
     public static FadeTransition fadeTransition(Node node, double seconds, Boolean fadeAway){
@@ -18,16 +24,36 @@ public final class AnimationUtils {
 
     public static ParallelTransition displacementEffect(ArrayList<Node> nodes, double seconds, double xOffset){
         ParallelTransition pt = new ParallelTransition();
-        ArrayList<TranslateTransition> transitions = new ArrayList<TranslateTransition>();
 
         for(Node node : nodes){
-            TranslateTransition transition = new TranslateTransition(Duration.seconds(seconds), node);
-            transition.setByX(xOffset);
-            transitions.add(transition);
+            Double currentAnchor = AnchorPane.getLeftAnchor(node);
+            double startX = currentAnchor != null ? currentAnchor : node.getLayoutX();
+            double targetX = startX + xOffset;
+
+            WritableValue<Double> anchorWrapper = new WritableValue<Double>() {
+                @Override
+                public Double getValue() {
+                    return AnchorPane.getLeftAnchor(node);
+                }
+
+                @Override
+                public void setValue(Double value) {
+                   AnchorPane.setLeftAnchor(node, value);
+                }
+            };
+
+            Timeline timeline = new Timeline(new KeyFrame(
+                Duration.seconds(seconds),
+                new KeyValue(anchorWrapper, targetX)
+            ));
+
+            pt.getChildren().add(timeline);
         }
 
-        pt.getChildren().addAll(transitions);
-
         return pt;
+    }
+
+    public static Animation emptyAnimation(){
+        return new PauseTransition(Duration.ZERO);
     }
 }

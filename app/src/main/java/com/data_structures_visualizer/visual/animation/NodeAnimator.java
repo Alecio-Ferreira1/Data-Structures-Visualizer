@@ -1,8 +1,5 @@
 package com.data_structures_visualizer.visual.animation;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import com.data_structures_visualizer.visual.ui.VisualNode;
 
 import javafx.animation.Animation;
@@ -19,26 +16,24 @@ import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 
 public final class NodeAnimator {
-    private static final Map<Rectangle, Timeline> activeTimeLines = new HashMap<>();
+    public static Animation highlight(Rectangle rect, int speedMillis, Color highlightColor){
+        Color base = (Color) rect.getStroke();
 
-    public static Animation startHighlight(Rectangle rect, int speedMillis, Color highlightColor){
-        if(activeTimeLines.containsKey(rect)) return null;
+        Timeline timeline = new Timeline(
+            new KeyFrame(Duration.ZERO,
+                new KeyValue(rect.strokeProperty(), base) 
+            ),
+            new KeyFrame(Duration.millis(speedMillis),
+                new KeyValue(rect.strokeProperty(), highlightColor) 
+            ),
+            new KeyFrame(Duration.millis(speedMillis * 2),
+                new KeyValue(rect.strokeProperty(), base) 
+            )
+        );
 
-        Timeline timeline = (Timeline) animateStroke(rect, (Color) rect.getStroke(), highlightColor, speedMillis, true);
-
-        activeTimeLines.put(rect, timeline);
+        timeline.setCycleCount(1);
         return timeline;
     }    
-
-    public static Animation stopHighlight(Rectangle rect){
-        Timeline timeline = activeTimeLines.remove(rect);
-
-        if(timeline != null){
-            timeline.stop();
-        }
-
-        return (Timeline) animateStroke(rect, (Color) rect.getStroke(), Color.BLACK, 300, false);
-    }
 
     public static Animation animateMove(VisualNode node, double x, double y, double seconds){
         TranslateTransition tt = new TranslateTransition(Duration.seconds(seconds), node);

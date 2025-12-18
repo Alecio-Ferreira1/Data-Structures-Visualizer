@@ -85,4 +85,38 @@ public final class DialogFactory {
             e.printStackTrace();   
         }
     }
+
+    public static void showVerticalChoiceDialog(
+        String message,
+        String btn1Text, Runnable opt1,
+        String btn2Text, Runnable opt2
+    ) {
+        Stage stage = new Stage();
+        stage.initModality(Modality.APPLICATION_MODAL);
+        stage.setResizable(false);
+
+        Label msg = new Label(message);
+        msg.setFont(Font.font(16));
+
+        Button b1 = new Button(btn1Text);
+        Button b2 = new Button(btn2Text);
+
+        b1.getStyleClass().add("standard-dark-gray-button");
+        b2.getStyleClass().add("standard-dark-gray-button");
+
+        b1.setOnAction(e -> { opt1.run(); stage.close(); });
+        b2.setOnAction(e -> { opt2.run(); stage.close(); });
+
+        VBox layout = new VBox(15, msg, b1, b2);
+        layout.setAlignment(Pos.CENTER);
+        layout.setPadding(new Insets(25));
+
+        Scene scene = new Scene(layout);
+        scene.getStylesheets().add(
+            DialogFactory.class.getResource("/css/style.css").toExternalForm()
+        );
+
+        stage.setScene(scene);
+        stage.showAndWait();    
+    }
 }

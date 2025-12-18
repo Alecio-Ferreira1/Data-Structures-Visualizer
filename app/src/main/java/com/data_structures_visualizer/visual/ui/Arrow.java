@@ -83,12 +83,4 @@ public final class Arrow extends Group{
             baseLenght - arrowSize, arrowSize 
         );
     }
-
-    public static Arrow createInvisble(double lenght){
-        Arrow arrow = new Arrow(lenght);
-        
-        arrow.setOpacity(0);
-        
-        return arrow;
-    }
 }

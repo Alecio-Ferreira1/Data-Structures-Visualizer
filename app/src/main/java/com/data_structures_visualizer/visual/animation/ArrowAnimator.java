@@ -18,12 +18,23 @@ public final class ArrowAnimator {
         BACKWARD 
     }
 
+    private static void prepareDash(Line line){
+        double lenght = line.getBoundsInParent().getWidth() + 
+                        line.getBoundsInParent().getHeight();
+
+        if(line.getStrokeDashArray().isEmpty()){
+            line.getStrokeDashArray().setAll(lenght, lenght);
+        }
+    }
+
     public static Animation animateIn(Arrow arrow, double seconds, DrawArrowDirection direction){
         Line line = arrow.getLine();
-        double lenght = line.getBoundsInParent().getWidth() + line.getBoundsInParent().getHeight();
+
+        prepareDash(line);
+
+        double lenght = line.getStrokeDashArray().get(0);
         double startOffset = direction == DrawArrowDirection.FORWARD ? lenght : -lenght; 
 
-        line.getStrokeDashArray().setAll(lenght, lenght);
         line.setStrokeDashOffset(startOffset);
 
         arrow.getHeadPolyline().setOpacity(0);
@@ -44,18 +55,18 @@ public final class ArrowAnimator {
 
     public static Animation animateOut(Arrow arrow, double seconds, DrawArrowDirection direction){
         Line line = arrow.getLine();
-        double lenght = line.getBoundsInParent().getWidth() + line.getBoundsInParent().getHeight();
-        double startOffset = direction == DrawArrowDirection.FORWARD ? -lenght : lenght; 
 
-        line.getStrokeDashArray().setAll(lenght, lenght);
-        line.setStrokeDashOffset(startOffset);
+        prepareDash(line);
 
+        double lenght = line.getStrokeDashArray().get(0);
+        double endOffset = direction == DrawArrowDirection.FORWARD ? -lenght : lenght; 
         Timeline lineAnimation = new Timeline(
             new KeyFrame(
-                Duration.seconds(seconds),
-                new KeyValue(
-                    arrow.getLine().strokeDashOffsetProperty(), 0, Interpolator.EASE_IN
-                )
+                Duration.ZERO,
+                new KeyValue(line.strokeDashOffsetProperty(), line.getStrokeDashOffset())
+            ),
+            new KeyFrame(Duration.seconds(2 * seconds / 3), 
+                new KeyValue(line.strokeDashOffsetProperty(), endOffset, Interpolator.EASE_BOTH)
             )
         );
 

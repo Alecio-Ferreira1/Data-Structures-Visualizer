@@ -86,12 +86,12 @@
                         <Insets />
                      </HBox.margin>
                   </Label>
-                  <Button mnemonicParsing="false" styleClass="control-button" text="⏮" />
-                  <Button mnemonicParsing="false" styleClass="control-button" text="◀" />
-                  <Button mnemonicParsing="false" styleClass="control-button" text="⏸" />
-                  <Button mnemonicParsing="false" styleClass="control-button" text="▶" />
-                  <Button mnemonicParsing="false" styleClass="control-button" text="⏭" />
-                  <ProgressBar prefHeight="13.0" prefWidth="239.0" progress="0.0" />
+                  <Button fx:id="reset_btn" mnemonicParsing="false" styleClass="control-button" text="⏮" />
+                  <Button fx:id="step_backward_btn" mnemonicParsing="false" styleClass="control-button" text="⏪" />
+                  <Button fx:id="pause_btn" mnemonicParsing="false" styleClass="control-button" text="⏸" />
+                  <Button fx:id="step_forward_btn" mnemonicParsing="false" styleClass="control-button" text="⏩" />
+                  <Button fx:id="advance_btn" mnemonicParsing="false" styleClass="control-button" text="⏭" />
+                  <ProgressBar fx:id="visualization_progress" prefHeight="13.0" prefWidth="239.0" progress="0.0" />
                </children>
                <BorderPane.margin>
                   <Insets />

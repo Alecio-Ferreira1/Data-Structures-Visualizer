@@ -171,7 +171,6 @@ public class DoublyLikedList<T> implements List<T> {
   
     while(tmp != null && !tmp.getValue().equals(value)){
       tmp = tmp.getNext();
-      --lenght;
     }
 
     if(tmp == null) return;
@@ -193,6 +192,8 @@ public class DoublyLikedList<T> implements List<T> {
 
   @Override
   public T get(int index) {
+    if(index < 0 || index >= lenght) return null;
+
     Node<T> target = head;
     int i = index;
 
@@ -201,7 +202,7 @@ public class DoublyLikedList<T> implements List<T> {
       --i;
     }
 
-    return i != 0 ? null : target.getValue();
+    return target != null ? target.getValue() : null;
   }
 
   @Override
@@ -214,5 +215,18 @@ public class DoublyLikedList<T> implements List<T> {
     head = null;
     tail = null;
     lenght = 0;
+  }
+
+  @Override
+  public int indexOf(T value){
+    Node<T> target = head;
+    int i = 0;
+
+    while(target != null && !target.equals(value)){
+      target = target.getNext();
+      i++;
+    }
+
+    return target == null ? - 1 : i;
   }
 }
