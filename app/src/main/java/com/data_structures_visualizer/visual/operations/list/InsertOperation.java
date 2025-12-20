@@ -6,13 +6,14 @@ import com.data_structures_visualizer.config.ListVisualizerConfig;
 import com.data_structures_visualizer.controllers.ListVisualizerController.ListType;
 import com.data_structures_visualizer.models.animation.AnimationTimeLine;
 import com.data_structures_visualizer.models.animation.Step;
-import com.data_structures_visualizer.visual.animation.AnimationUtils;
 import com.data_structures_visualizer.visual.animation.ArrowAnimator;
-import com.data_structures_visualizer.visual.animation.CurvedArrowAnimator;
 import com.data_structures_visualizer.visual.animation.NodeAnimator;
 import com.data_structures_visualizer.visual.animation.ArrowAnimator.DrawArrowDirection;
 import com.data_structures_visualizer.visual.context.list.InsertContext;
 import com.data_structures_visualizer.visual.context.list.InsertExecutionContext;
+import com.data_structures_visualizer.visual.operations.common.FixArrowLabelsPosOperation;
+import com.data_structures_visualizer.visual.operations.common.FixCurvedArrowPosOperation;
+import com.data_structures_visualizer.visual.operations.common.RepositionNodesOperation;
 import com.data_structures_visualizer.visual.operations.common.TransverseAndHighlightOperation;
 import com.data_structures_visualizer.visual.ui.Arrow;
 import com.data_structures_visualizer.visual.ui.ArrowLabel;
@@ -21,12 +22,9 @@ import com.data_structures_visualizer.visual.ui.VisualNode;
 
 import javafx.animation.Animation;
 import javafx.animation.SequentialTransition;
-import javafx.animation.TranslateTransition;
-import javafx.scene.Node;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
-import javafx.util.Duration;
 
 public final class InsertOperation {
     private final InsertContext context;
@@ -65,37 +63,10 @@ public final class InsertOperation {
         addStepToMoveCurvedArrowIfNeeded(timeLine);
         addFixLabelsStep(timeLine);
     }
-    
-    private Animation repositionNodes(int startIndex, double xOffset){
-        ArrayList<Node> toMove = new ArrayList<Node>();
-
-        for(int i = startIndex; i < nodes.size(); ++i){
-            toMove.add(nodes.get(i));
-
-            if(i < arrows.size()){
-                toMove.add(arrows.get(i));
-
-                if(context.getListType() == ListType.DOUBLY && i < prevArrows.size()){
-                    toMove.add(prevArrows.get(i));
-                }
-            }
-        }
-
-        if(visualization_area.getChildren().contains(headLabel) && context.getPos() == 0){
-            toMove.add(headLabel);
-        }
-
-        if(visualization_area.getChildren().contains(tailLabel) && context.getPos() != context.getInitialListSize()){
-            toMove.add(tailLabel);
-        }
-
-        return AnimationUtils.displacementEffect(
-            toMove, ListVisualizerConfig.translateDuration, xOffset
-        );
-    }
 
     private Animation createNode(double size, int value, int pos){
         newNode = new VisualNode(size, size, String.valueOf(value));
+
         final double startHeight = 0.2 * visualization_area.getHeight();
         final double width = visualization_area.getWidth();
         final double height = visualization_area.getHeight();
@@ -216,16 +187,49 @@ public final class InsertOperation {
         if(context.getPos() > 0){
             new TransverseAndHighlightOperation(nodes, timeLine).build(context.getPos() - 1);
 
-            Rectangle targetRect = nodes.get(context.getPos() - 1).getRect();
             double speed = ListVisualizerConfig.speedVisualization;
-
+            
             timeLine.addStep(new Step(
-                () -> NodeAnimator.animateStroke(
-                    targetRect, (Color) targetRect.getStroke(), Color.ORANGE, (int) (500 * speed), false
-                ),  
-                () -> NodeAnimator.animateStroke(
-                    targetRect, (Color) targetRect.getStroke(), Color.BLACK, (int) (500 * speed), false
-                )
+                () -> {
+                    Rectangle prevNodeRect = nodes.get(context.getPos() - 1).getRect();
+            
+                    Animation hightLightPrevNode = NodeAnimator.animateStroke(
+                        prevNodeRect, (Color) prevNodeRect.getStroke(), Color.ORANGE, (int) (700 * speed), false
+                    );
+
+                    if(context.getPos() < nodes.size()){
+                        Rectangle nextNodeRect = nodes.get(context.getPos()).getRect();
+
+                        return new SequentialTransition(
+                            hightLightPrevNode,
+                            NodeAnimator.animateStroke(
+                                nextNodeRect, (Color) nextNodeRect.getStroke(), Color.BLUE, (int) (700 * speed), false
+                            )
+                        );
+                    }
+
+                    return hightLightPrevNode;
+                },
+                () -> {
+                    Rectangle prevNodeRect = nodes.get(context.getPos() - 1).getRect();
+
+                    Animation undoHightLightPrevNode = NodeAnimator.animateStroke(
+                        prevNodeRect, (Color) prevNodeRect.getStroke(), Color.BLACK, (int) (700 * speed), false
+                    );
+
+                    if(context.getPos() < nodes.size()){
+                        Rectangle nextNodeRect = nodes.get(context.getPos()).getRect();
+
+                        return new SequentialTransition(
+                            NodeAnimator.animateStroke(
+                                nextNodeRect, (Color) nextNodeRect.getStroke(), Color.BLACK, (int) (700 * speed), false
+                            ),
+                            undoHightLightPrevNode
+                        );
+                    }
+
+                    return undoHightLightPrevNode;
+                } 
             ));
         }
     }
@@ -267,14 +271,19 @@ public final class InsertOperation {
     }
 
     private void addCreateNodeStep(AnimationTimeLine timeLine){
+        RepositionNodesOperation repositionNodes = new RepositionNodesOperation(
+            nodes, arrows, prevArrows, headLabel, tailLabel, visualization_area, 
+            context.getPos(), context.getInitialListSize(), context.getListType()
+        );
+
         timeLine.addStep(new Step(
             () -> new SequentialTransition(
-                repositionNodes(context.getPos(), context.getxOffset()),
+                repositionNodes.build(context.getPos(), context.getxOffset()),
                 createNode(context.getNodeWidth(), context.getValue(), context.getPos())
             ),
             () -> new SequentialTransition(
                 undoCreateNode(),
-                repositionNodes(context.getPos(), -context.getxOffset())
+                repositionNodes.build(context.getPos(), -context.getxOffset())
             )
         ));
     }
@@ -366,100 +375,58 @@ public final class InsertOperation {
     private void addStepToConnectNextArrow(AnimationTimeLine timeLine){
         if(context.getPos() >= context.getInitialListSize()) return;
 
+        double speed = ListVisualizerConfig.speedVisualization;
+
         timeLine.addStep(new Step(
-            () -> createArrows(
+            () -> {
+                Animation toCreateArrows =  createArrows(
                     context.getNodeWidth() * ListVisualizerConfig.spacingBetweenNodes, 
                     context.getPos()
-                ),
-            () -> undoCreateArrows()
+                );
+
+                if(context.getPos() + 1 < nodes.size()){
+                    Rectangle nextNodeRect = nodes.get(context.getPos() + 1).getRect();
+
+                    return new SequentialTransition(
+                        toCreateArrows, 
+                        NodeAnimator.animateStroke(
+                            nextNodeRect, (Color) nextNodeRect.getStroke(), Color.BLACK, (int) (700 * speed), false
+                        )
+                    );
+                }
+
+                return toCreateArrows;
+            },
+            () -> {
+                if(context.getPos() + 1 < nodes.size()){
+                    Rectangle nextNodeRect = nodes.get(context.getPos() + 1).getRect();
+
+                    return new SequentialTransition(
+                        NodeAnimator.animateStroke(
+                            nextNodeRect, (Color) nextNodeRect.getStroke(), Color.BLUE, (int) (700 * speed), false
+                        ),
+                        undoCreateArrows()
+                    );
+                }
+
+                return undoCreateArrows();
+            }
         ));
     }
 
     private void addStepToMoveCurvedArrowIfNeeded(AnimationTimeLine timeLine){
-        if(context.getListType() != ListType.CIRCULAR) return;
-        
-        timeLine.addStep(new Step(
-            () -> {
-                final VisualNode first = nodes.get(0);
-                final VisualNode last = nodes.get(nodes.size() - 1);
+        FixCurvedArrowPosOperation fixCurvedArrow = new FixCurvedArrowPosOperation(
+            nodes, curvedArrow, visualization_area, context.getxOffset(), context.getListType()
+        );
 
-                double fromStartX = last.getLayoutX() + (last.getRect().getWidth() / 2) - context.getxOffset();
-                double fromStartY = last.getLayoutY() + last.getRect().getHeight();
-                double toStartX = last.getLayoutX() + (last.getRect().getWidth() / 2);
-                double toStartY = last.getLayoutY() + last.getRect().getHeight();
-                double fromEndX = first.getLayoutX() + (first.getRect().getWidth() / 2) - context.getxOffset();
-                double fromEndY = fromStartY;
-                double toEndX = first.getLayoutX() + (first.getRect().getWidth() / 2);
-                double toEndY = fromEndY;
-                double width = visualization_area.getWidth();
-                double height = visualization_area.getHeight();
-                    
-                return CurvedArrowAnimator.animateEndPoints(
-                    fromStartX, fromStartY, fromEndX, fromEndY, toStartX, toStartY, toEndX, toEndY, 
-                    1.5 * ListVisualizerConfig.speedVisualization, 
-                     Math.min(width, height) * 0.02, curvedArrow, nodes.size() == 1
-                );
-            }, 
-            () -> {
-                final VisualNode first = nodes.get(0);
-                final VisualNode last = nodes.get(nodes.size() - 1);
-
-                double fromStartX = last.getLayoutX() + (last.getRect().getWidth() / 2) - context.getxOffset();
-                double fromStartY = last.getLayoutY() + last.getRect().getHeight();
-                double toStartX = last.getLayoutX() + (last.getRect().getWidth() / 2);
-                double toStartY = last.getLayoutY() + last.getRect().getHeight();
-                double fromEndX = first.getLayoutX() + (first.getRect().getWidth() / 2) - context.getxOffset();
-                double fromEndY = fromStartY;
-                double toEndX = first.getLayoutX() + (first.getRect().getWidth() / 2);
-                double toEndY = fromEndY;
-                double width = visualization_area.getWidth();
-                double height = visualization_area.getHeight();
-
-                return CurvedArrowAnimator.animateEndPoints(
-                    toStartX, toStartY, toEndX, toEndY, fromStartX, fromStartY, fromEndX, fromEndY, 
-                    1.5 * ListVisualizerConfig.speedVisualization, 
-                    Math.min(width, height) * 0.02, curvedArrow, nodes.size() == 1
-                );
-            }
-        )); 
+        fixCurvedArrow.build(timeLine);
     }
 
     private void addFixLabelsStep(AnimationTimeLine timeLine){
-        TranslateTransition translateHead = new TranslateTransition(
-            Duration.seconds(ListVisualizerConfig.translateDuration / 3), headLabel  
+        FixArrowLabelsPosOperation fixArrowLabels = new FixArrowLabelsPosOperation(
+            headLabel, tailLabel, context.getxOffset(), context.getPos(), context.getInitialListSize()
         );
 
-        TranslateTransition translateTail = new TranslateTransition(
-            Duration.seconds(ListVisualizerConfig.translateDuration / 3), tailLabel  
-        );
-
-        TranslateTransition undoTranslateHead = new TranslateTransition(
-            Duration.seconds(ListVisualizerConfig.translateDuration / 3), headLabel  
-        );
-
-        TranslateTransition undoTranslateTail = new TranslateTransition(
-            Duration.seconds(ListVisualizerConfig.translateDuration / 3), tailLabel  
-        );
-
-        translateHead.setByX(-context.getxOffset());
-        translateTail.setByX(context.getxOffset());
-        undoTranslateHead.setByX(context.getxOffset());
-        undoTranslateTail.setByX(-context.getxOffset());
-
-        if(context.getPos() == 0){
-            timeLine.addStep(new Step(
-                () -> translateHead,
-                () -> undoTranslateHead
-            ));
-
-            return;
-        }
-
-        if(context.getPos() == context.getInitialListSize()){
-            timeLine.addStep(new Step(
-                () -> translateTail,
-                () -> undoTranslateTail
-            ));
-        }
+        fixArrowLabels.build(timeLine, true);
     }
 }

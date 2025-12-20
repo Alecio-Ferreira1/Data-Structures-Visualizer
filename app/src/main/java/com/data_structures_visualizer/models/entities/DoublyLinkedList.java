@@ -1,11 +1,11 @@
 package com.data_structures_visualizer.models.entities;
 
-public class DoublyLikedList<T> implements List<T> {
+public class DoublyLinkedList<T> implements List<T> {
   private Node<T> head;
   private Node<T> tail;
   private int lenght = 0;
 
-  public DoublyLikedList(T startValue){
+  public DoublyLinkedList(T startValue){
     if(startValue == null) return;
 
     createList(new Node<T>(startValue));

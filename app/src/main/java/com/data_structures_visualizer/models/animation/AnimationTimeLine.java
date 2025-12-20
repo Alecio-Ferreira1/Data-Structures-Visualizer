@@ -1,6 +1,6 @@
 package com.data_structures_visualizer.models.animation;
 
-import com.data_structures_visualizer.models.entities.DoublyLikedList;
+import com.data_structures_visualizer.models.entities.DoublyLinkedList;
 
 import javafx.animation.Animation;
 import javafx.application.Platform;
@@ -9,15 +9,11 @@ import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 
 public final class AnimationTimeLine {
-    private final DoublyLikedList<Step> steps = new DoublyLikedList<Step>(null);
+    private final DoublyLinkedList<Step> steps = new DoublyLinkedList<Step>(null);
     private int index = -1;
     private Animation currentAnimation;
     private DoubleProperty progress = new SimpleDoubleProperty(0);
     private Runnable onFinished;
-
-    public DoublyLikedList<Step> getSteps(){
-        return steps;
-    }
 
     public ReadOnlyDoubleProperty progressProperty(){
         return progress;
@@ -38,6 +34,8 @@ public final class AnimationTimeLine {
     }
 
     public void playNext(){
+        if(steps.isEmpty()) return;
+
         if((index + 1) < ( steps.lenght())){
             index++;
             updateProgress();
@@ -46,6 +44,8 @@ public final class AnimationTimeLine {
     }
 
     public void playPrevious(double rate){
+        if(steps.isEmpty()) return;
+
         if(index >= 0){
             Animation animation = steps.get(index).undo();
             animation.setRate(rate);
@@ -122,5 +122,11 @@ public final class AnimationTimeLine {
 
     public void setOnFinished(Runnable r){
         onFinished = r;
+    }
+
+    public void clear(){
+        steps.clear();
+        updateProgress();
+        index = -1;
     }
 }

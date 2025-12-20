@@ -6,7 +6,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import com.data_structures_visualizer.config.ListVisualizerConfig;
 import com.data_structures_visualizer.models.animation.AnimationTimeLine;
 import com.data_structures_visualizer.models.entities.CircularLinkedList;
-import com.data_structures_visualizer.models.entities.DoublyLikedList;
+import com.data_structures_visualizer.models.entities.DoublyLinkedList;
 import com.data_structures_visualizer.models.entities.SinglyLinkedList;
 import com.data_structures_visualizer.util.DialogFactory;
 import com.data_structures_visualizer.util.SceneManager;
@@ -88,7 +88,7 @@ public final class ListVisualizerController {
     private ArrowLabel headLabel;
     private ArrowLabel tailLabel;
     private final SinglyLinkedList<Integer> singlyLinkedList = new SinglyLinkedList<Integer>(null);
-    private final DoublyLikedList<Integer> doublyLikedList = new DoublyLikedList<Integer>(null);
+    private final DoublyLinkedList<Integer> doublyLikedList = new DoublyLinkedList<Integer>(null);
     private final CircularLinkedList<Integer> circularLinkedList = new CircularLinkedList<Integer>(null);
     private AnimationTimeLine animationTimeLine = new AnimationTimeLine();
 
@@ -176,7 +176,6 @@ public final class ListVisualizerController {
             else{
                 animationTimeLine.play();
             }
-
         });
         
         step_forward_btn.setOnAction(e -> {
@@ -274,6 +273,8 @@ public final class ListVisualizerController {
                 visualization_area.getWidth(), 
                 visualization_area.getHeight()
             );
+
+            animationTimeLine.clear();
         });
 
         doubly_linked_list_btn.setOnAction(e -> {
@@ -282,6 +283,8 @@ public final class ListVisualizerController {
                 visualization_area.getWidth(), 
                 visualization_area.getHeight()
             );
+
+            animationTimeLine.clear();
         });
 
         circular_linked_list_btn.setOnAction(e -> {
@@ -290,6 +293,8 @@ public final class ListVisualizerController {
                 visualization_area.getWidth(), 
                 visualization_area.getHeight()
             );
+
+            animationTimeLine.clear();
         });
     }
 
@@ -586,6 +591,7 @@ public final class ListVisualizerController {
         arrows.clear();
         curvedArrow = null;
         prevArrows.clear();
+        animationTimeLine.clear();
     }
 
     private void anchorArrowLabels(double arrowLenght, double fontSize, double width, double height){
@@ -699,6 +705,8 @@ public final class ListVisualizerController {
     private void insertNode(int value, int pos){
         if(!validadeInsertion(pos)) return;
 
+        animationTimeLine.clear();
+
         InsertContext insertContext = buildInsertContext(value, pos);
 
         InsertOperation op = new InsertOperation(
@@ -720,6 +728,8 @@ public final class ListVisualizerController {
 
     private void deleteNode(int value, boolean removeByIndex){
         if(!validadeDeletion(removeByIndex, value)) return;
+
+        animationTimeLine.clear();
 
         DeleteContext deleteContext = buildDeleteContext(value, removeByIndex);
 
