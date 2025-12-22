@@ -1,4 +1,4 @@
-package com.data_structures_visualizer.visual.operations.common;
+package com.data_structures_visualizer.visual.operations.list.common;
 
 import java.util.ArrayList;
 
@@ -20,14 +20,13 @@ public final class RepositionNodesOperation {
     private final ArrowLabel headLabel;
     private final ArrowLabel tailLabel;
     private final AnchorPane visualization_area;
-    private final int pos;
     private final ListType listType;
     private final int listInitialSize;
 
     public RepositionNodesOperation(
         ArrayList<VisualNode> nodes, ArrayList<Arrow> arrows, ArrayList<Arrow> prevArrows, 
         ArrowLabel headLabel, ArrowLabel tailLabel, AnchorPane visualization_area, 
-        int pos, int listInitialSize, ListType listType
+        int listInitialSize, ListType listType
     ){
         this.nodes = nodes;
         this.arrows = arrows;
@@ -35,12 +34,11 @@ public final class RepositionNodesOperation {
         this.headLabel = headLabel;
         this.tailLabel = tailLabel;
         this.visualization_area = visualization_area;
-        this.pos = pos;
         this.listType = listType;
         this.listInitialSize = listInitialSize;
     }
 
-    public Animation build(int startIndex, double xOffset){
+    public Animation build(int startIndex, double xOffset, Operation op){
         ArrayList<Node> toMove = new ArrayList<Node>();
 
         for(int i = startIndex; i < nodes.size(); ++i){
@@ -55,11 +53,11 @@ public final class RepositionNodesOperation {
             }
         }
 
-        if(visualization_area.getChildren().contains(headLabel) && pos == 0){
+        if(visualization_area.getChildren().contains(headLabel) && startIndex == 0 & op != Operation.DELETE){
             toMove.add(headLabel);
         }
 
-        if(visualization_area.getChildren().contains(tailLabel) && pos != listInitialSize){
+        if(visualization_area.getChildren().contains(tailLabel) && startIndex != listInitialSize){
             toMove.add(tailLabel);
         }
 

@@ -11,10 +11,11 @@ import com.data_structures_visualizer.visual.animation.NodeAnimator;
 import com.data_structures_visualizer.visual.animation.ArrowAnimator.DrawArrowDirection;
 import com.data_structures_visualizer.visual.context.list.InsertContext;
 import com.data_structures_visualizer.visual.context.list.InsertExecutionContext;
-import com.data_structures_visualizer.visual.operations.common.FixArrowLabelsPosOperation;
-import com.data_structures_visualizer.visual.operations.common.FixCurvedArrowPosOperation;
-import com.data_structures_visualizer.visual.operations.common.RepositionNodesOperation;
-import com.data_structures_visualizer.visual.operations.common.TransverseAndHighlightOperation;
+import com.data_structures_visualizer.visual.operations.list.common.FixArrowLabelsPosOperation;
+import com.data_structures_visualizer.visual.operations.list.common.FixCurvedArrowPosOperation;
+import com.data_structures_visualizer.visual.operations.list.common.Operation;
+import com.data_structures_visualizer.visual.operations.list.common.RepositionNodesOperation;
+import com.data_structures_visualizer.visual.operations.list.common.TransverseAndHighlightOperation;
 import com.data_structures_visualizer.visual.ui.Arrow;
 import com.data_structures_visualizer.visual.ui.ArrowLabel;
 import com.data_structures_visualizer.visual.ui.CurvedArrow;
@@ -273,17 +274,17 @@ public final class InsertOperation {
     private void addCreateNodeStep(AnimationTimeLine timeLine){
         RepositionNodesOperation repositionNodes = new RepositionNodesOperation(
             nodes, arrows, prevArrows, headLabel, tailLabel, visualization_area, 
-            context.getPos(), context.getInitialListSize(), context.getListType()
+            context.getInitialListSize(), context.getListType()
         );
 
         timeLine.addStep(new Step(
             () -> new SequentialTransition(
-                repositionNodes.build(context.getPos(), context.getxOffset()),
+                repositionNodes.build(context.getPos(), context.getxOffset(), Operation.INSERT),
                 createNode(context.getNodeWidth(), context.getValue(), context.getPos())
             ),
             () -> new SequentialTransition(
                 undoCreateNode(),
-                repositionNodes.build(context.getPos(), -context.getxOffset())
+                repositionNodes.build(context.getPos(), -context.getxOffset(), Operation.INSERT)
             )
         ));
     }
@@ -427,6 +428,6 @@ public final class InsertOperation {
             headLabel, tailLabel, context.getxOffset(), context.getPos(), context.getInitialListSize()
         );
 
-        fixArrowLabels.build(timeLine, true);
+        fixArrowLabels.build(timeLine, true, Operation.INSERT);
     }
 }

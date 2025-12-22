@@ -1,4 +1,4 @@
-package com.data_structures_visualizer.visual.operations.common;
+package com.data_structures_visualizer.visual.operations.list.common;
 
 import java.util.ArrayList;
 

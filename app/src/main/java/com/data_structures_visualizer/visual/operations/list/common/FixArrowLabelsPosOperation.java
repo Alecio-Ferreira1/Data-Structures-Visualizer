@@ -1,4 +1,4 @@
-package com.data_structures_visualizer.visual.operations.common;
+package com.data_structures_visualizer.visual.operations.list.common;
 
 import com.data_structures_visualizer.config.ListVisualizerConfig;
 import com.data_structures_visualizer.models.animation.AnimationTimeLine;
@@ -25,7 +25,7 @@ public final class FixArrowLabelsPosOperation {
         this.listInitialSize = listInitialSize;
     }
 
-    public void build(AnimationTimeLine timeLine, boolean shiftRight){
+    public void build(AnimationTimeLine timeLine, boolean shiftRight, Operation op){
         TranslateTransition translateHead = new TranslateTransition(
             Duration.seconds(ListVisualizerConfig.translateDuration / 3), headLabel  
         );
@@ -49,7 +49,7 @@ public final class FixArrowLabelsPosOperation {
         undoTranslateHead.setByX(xOffset * i);
         undoTranslateTail.setByX(-xOffset * i);
 
-        if(pos == 0){
+        if(pos == 0 && op == Operation.INSERT){
             timeLine.addStep(new Step(
                 () -> translateHead,
                 () -> undoTranslateHead
@@ -58,7 +58,9 @@ public final class FixArrowLabelsPosOperation {
             return;
         }
 
-        if(pos == listInitialSize){
+        if(pos == listInitialSize && op == Operation.INSERT || 
+          (pos == listInitialSize - 1 && op == Operation.DELETE)
+        ){
             timeLine.addStep(new Step(
                 () -> translateTail,
                 () -> undoTranslateTail

@@ -100,18 +100,19 @@ public class DoublyLinkedList<T> implements List<T> {
       tmp = tmp.getNext();
     }
 
-    Node<T> tmpPrev = tmp.getPrev();
-
     if(pos >= lenght){
-      tmpPrev.setNext(node);
-      node.setPrev(tmpPrev);
+      tmp.setNext(node);
+      node.setPrev(tmp);
       tail = node;
     }
 
     else{
+      Node<T> tmpPrev = tmp.getPrev();
+
       node.setNext(tmp);
       node.setPrev(tmpPrev);
       tmpPrev.setNext(node);
+      tmp.setPrev(node);
     }
 
     ++lenght;
@@ -128,7 +129,10 @@ public class DoublyLinkedList<T> implements List<T> {
 
     if(pos == 0){
       head = head.getNext();
-      head.setPrev(null);
+
+      if(head != null)
+        head.setPrev(null);
+      
       --lenght;
       return;
     }

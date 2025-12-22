@@ -592,6 +592,9 @@ public final class ListVisualizerController {
         curvedArrow = null;
         prevArrows.clear();
         animationTimeLine.clear();
+        singlyLinkedList.clear();
+        doublyLikedList.clear();
+        circularLinkedList.clear();
     }
 
     private void anchorArrowLabels(double arrowLenght, double fontSize, double width, double height){
@@ -739,7 +742,7 @@ public final class ListVisualizerController {
         );
 
         op.build(animationTimeLine);
-
+    
         animationTimeLine.play();
     }
 }

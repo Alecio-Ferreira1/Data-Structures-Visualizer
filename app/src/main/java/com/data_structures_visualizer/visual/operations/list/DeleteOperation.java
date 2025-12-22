@@ -12,10 +12,11 @@ import com.data_structures_visualizer.visual.animation.NodeAnimator;
 import com.data_structures_visualizer.visual.animation.ArrowAnimator.DrawArrowDirection;
 import com.data_structures_visualizer.visual.context.list.DeleteContext;
 import com.data_structures_visualizer.visual.context.list.DeleteExecutionContext;
-import com.data_structures_visualizer.visual.operations.common.FixArrowLabelsPosOperation;
-import com.data_structures_visualizer.visual.operations.common.FixCurvedArrowPosOperation;
-import com.data_structures_visualizer.visual.operations.common.RepositionNodesOperation;
-import com.data_structures_visualizer.visual.operations.common.TransverseAndHighlightOperation;
+import com.data_structures_visualizer.visual.operations.list.common.FixArrowLabelsPosOperation;
+import com.data_structures_visualizer.visual.operations.list.common.FixCurvedArrowPosOperation;
+import com.data_structures_visualizer.visual.operations.list.common.Operation;
+import com.data_structures_visualizer.visual.operations.list.common.RepositionNodesOperation;
+import com.data_structures_visualizer.visual.operations.list.common.TransverseAndHighlightOperation;
 import com.data_structures_visualizer.visual.ui.Arrow;
 import com.data_structures_visualizer.visual.ui.ArrowLabel;
 import com.data_structures_visualizer.visual.ui.CurvedArrow;
@@ -55,6 +56,9 @@ public final class DeleteOperation {
 
     public void build(AnimationTimeLine timeLine){
         addTransversalStep(timeLine);
+
+        if(context.getIndexToRemove() == -1) return;
+
         addDesconnectNodeStep(timeLine);
         addRemoveNodeStep(timeLine);
         addEstablishConnectionsStep(timeLine);
@@ -79,8 +83,14 @@ public final class DeleteOperation {
     }
 
     private Animation applyHighLights(Color prevRectColor, Color targetRectColor, Color nextRectColor){
-        final int index = context.getIndexToRemove();
-        final Rectangle targetRect = nodes.get(index).getRect();
+        int index = context.getIndexToRemove();
+
+        if(nodes.isEmpty()) return AnimationUtils.emptyAnimation();
+
+        if(index == nodes.size())
+            index--;
+
+        final Rectangle targetRect = nodes.get(index < 0 ? 0 : index).getRect();
         Rectangle prevRect = nodes.get(index - 1 >= 0 ? index - 1 : 0).getRect();
         Rectangle nextRect = nodes.get(index + 1 < nodes.size() ? index + 1 : 0).getRect();
         double speed = ListVisualizerConfig.speedVisualization;
@@ -99,8 +109,6 @@ public final class DeleteOperation {
     }
 
     private void addDesconnectNodeStep(AnimationTimeLine timeLine){
-        if(context.getIndexToRemove() == -1) return;
-
         desconnectPrevArrows(timeLine);
         desconnectNextArrows(timeLine);
     }
@@ -112,18 +120,45 @@ public final class DeleteOperation {
         if(index - 1 < 0) return;
 
         timeLine.addStep(new Step(
-            () -> new SequentialTransition(
-                ArrowAnimator.animateOut(arrows.get(index - 1), speed * 1, DrawArrowDirection.BACKWARD), 
-                context.getListType() == ListType.DOUBLY ?
-                ArrowAnimator.animateOut(prevArrows.get(index - 1), speed * 1, DrawArrowDirection.FORWARD) :
-                AnimationUtils.emptyAnimation()
-            ),
-            () -> new SequentialTransition(
-                context.getListType() == ListType.DOUBLY ?
-                ArrowAnimator.animateIn(prevArrows.get(index - 1), speed * 1, DrawArrowDirection.BACKWARD) :
-                AnimationUtils.emptyAnimation(),
-                ArrowAnimator.animateIn(arrows.get(index - 1), speed * 1, DrawArrowDirection.FORWARD)
-            )
+            () -> {
+                Animation animation = new SequentialTransition(
+                    ArrowAnimator.animateOut(arrows.get(index - 1), speed * 1, DrawArrowDirection.BACKWARD), 
+                    context.getListType() == ListType.DOUBLY ?
+                    ArrowAnimator.animateOut(prevArrows.get(index - 1), speed * 1, DrawArrowDirection.FORWARD) :
+                    AnimationUtils.emptyAnimation()
+                );
+
+                if(index == nodes.size() - 1){
+                    exec.getRemovedArrows().push(arrows.get(index - 1));
+
+                    animation.setOnFinished(e -> {
+                        visualization_area.getChildren().remove(arrows.get(index - 1));
+
+                        if(context.getListType() == ListType.DOUBLY)
+                            visualization_area.getChildren().remove(prevArrows.get(index - 1));
+                    });
+
+                    arrows.remove(index - 1);
+
+                    if(context.getListType() == ListType.DOUBLY){
+                        exec.getRemovedPrevArrows().push(prevArrows.get(index - 1));
+                        prevArrows.remove(index - 1);
+                    }
+                }
+
+                return animation;
+            },
+            () -> {
+                if(index == nodes.size() - 1) 
+                    return undoRemoveArrows();
+
+                return new SequentialTransition(
+                    context.getListType() == ListType.DOUBLY ?
+                    ArrowAnimator.animateIn(prevArrows.get(index - 1), speed * 1, DrawArrowDirection.BACKWARD) :
+                        AnimationUtils.emptyAnimation(),
+                    ArrowAnimator.animateIn(arrows.get(index - 1), speed * 1, DrawArrowDirection.FORWARD)
+                );
+            }
         ));
     }
 
@@ -146,48 +181,54 @@ public final class DeleteOperation {
 
                 exec.getRemovedArrows().push(arrows.get(index));
 
-                if(context.getListType() == ListType.DOUBLY){
-                    exec.getRemovedPrevArrows().push(prevArrows.get(index));
-                }
-
                 removeNextArrows.setOnFinished(e -> {
                     visualization_area.getChildren().remove(arrows.get(index));
-                    arrows.remove(index);
         
                     if(context.getListType() == ListType.DOUBLY){
                         visualization_area.getChildren().remove(prevArrows.get(index));
-                        prevArrows.remove(index);
                     }
                 });
+
+                arrows.remove(index);
+
+                if(context.getListType() == ListType.DOUBLY){
+                    exec.getRemovedPrevArrows().push(prevArrows.get(index));
+                    prevArrows.remove(index);
+                }
 
                 return removeNextArrows;
             },
-            () -> {
-                Arrow arrow = exec.getRemovedArrows().pop();
-                Arrow prevArrow = exec.getRemovedPrevArrows().pop();
-
-                Animation animation = new SequentialTransition(
-                    ArrowAnimator.animateIn(arrows.get(index), speed * 1, DrawArrowDirection.FORWARD), 
-                    context.getListType() == ListType.DOUBLY ?
-                    ArrowAnimator.animateIn(prevArrows.get(index), speed * 1, DrawArrowDirection.BACKWARD) :
-                    AnimationUtils.emptyAnimation()
-                );
-
-                animation.setOnFinished(e -> {
-                    if(prevArrow != null){
-                        prevArrows.add(index, prevArrow);
-                        visualization_area.getChildren().add(prevArrow);
-                    }
-
-                    if(arrow != null){
-                        arrows.add(index, arrow);
-                        visualization_area.getChildren().add(arrow);
-                    }
-                });
-                
-                return animation;
-            }
+            () -> undoRemoveArrows()
         ));
+    }
+
+    private Animation undoRemoveArrows(){
+        double speed = ListVisualizerConfig.speedVisualization;
+        int index = context.getIndexToRemove();
+
+        Arrow arrow = exec.getRemovedArrows().pop();
+        Arrow prevArrow = exec.getRemovedPrevArrows().pop();
+
+        Animation animation = new SequentialTransition(
+            ArrowAnimator.animateIn(arrow, speed * 1, DrawArrowDirection.FORWARD), 
+            context.getListType() == ListType.DOUBLY ?
+            ArrowAnimator.animateIn(prevArrow, speed * 1, DrawArrowDirection.BACKWARD) :
+            AnimationUtils.emptyAnimation()
+        );
+
+        animation.setOnFinished(e -> {
+            if(prevArrow != null){
+                prevArrows.add(index, prevArrow);
+                visualization_area.getChildren().add(prevArrow);
+            }
+
+            if(arrow != null){
+                arrows.add(index, arrow);
+                visualization_area.getChildren().add(arrow);
+            }
+        });
+                
+        return animation;
     }
 
     private void addRemoveNodeStep(AnimationTimeLine timeLine){
@@ -198,10 +239,14 @@ public final class DeleteOperation {
                 VisualNode node = nodes.get(context.getIndexToRemove());
                 Animation animation = NodeAnimator.emergeEffect(node, 3 * speed, false);
 
+                context.getSinglyLinkedList().removeItem(context.getIndexToRemove());
+                context.getDoublyLikedList().removeItem(context.getIndexToRemove());
+                context.getCircularLinkedList().removeItem(context.getIndexToRemove());
+
                 exec.getRemovedNodes().push(node);
+                nodes.remove(node);
 
                 animation.setOnFinished(e -> {
-                    nodes.remove(node);
                     visualization_area.getChildren().remove(node);
                 });
 
@@ -209,34 +254,36 @@ public final class DeleteOperation {
             }, 
             () ->{
                 VisualNode node = exec.getRemovedNodes().pop();
-                Animation animation = NodeAnimator.emergeEffect(node, 3 * speed, true);
 
-                animation.setOnFinished(e -> {
-                    nodes.add(context.getIndexToRemove(), node); 
-                });
+                nodes.add(context.getIndexToRemove(), node); 
+                visualization_area.getChildren().add(node);
 
-                return animation;
+                Integer value = Integer.parseInt(node.getText());
+
+                context.getSinglyLinkedList().insertOnPos(value, context.getIndexToRemove());
+                context.getDoublyLikedList().insertOnPos(value, context.getIndexToRemove());
+                context.getCircularLinkedList().insertOnPos(value, context.getIndexToRemove());
+
+                return NodeAnimator.emergeEffect(node, 3 * speed, true);
             }
         ));
     }
 
     private void addEstablishConnectionsStep(AnimationTimeLine timeLine){
-        int index = context.getIndexToRemove();
-
-        if(index == 0 || index == nodes.size()) return;
-
         double speed = ListVisualizerConfig.speedVisualization;
         
         timeLine.addStep(new Step(
             () -> {
+                int index = Math.max(context.getIndexToRemove() - 1, 0);
+
                 RepositionNodesOperation repositionNodes = new RepositionNodesOperation(
                     nodes, arrows, prevArrows, headLabel, tailLabel, visualization_area, 
-                    context.getIndexToRemove(), nodes.size(), context.getListType()
+                    nodes.size(), context.getListType()
                 );
 
-                if(index < arrows.size()){
+                if(index < arrows.size() && context.getIndexToRemove() != 0){
                     return new SequentialTransition(
-                        repositionNodes.build(index, -context.getxOffset()),
+                        repositionNodes.build(context.getIndexToRemove(), -context.getxOffset(), Operation.DELETE),
                         ArrowAnimator.animateIn(arrows.get(index), 1 * speed, DrawArrowDirection.FORWARD),
                         context.getListType() == ListType.DOUBLY ? 
                         ArrowAnimator.animateIn(prevArrows.get(index), 1 * speed, DrawArrowDirection.FORWARD) 
@@ -246,30 +293,32 @@ public final class DeleteOperation {
                 }
 
                 return new SequentialTransition(
-                    repositionNodes.build(index, -context.getxOffset()),
+                    repositionNodes.build(context.getIndexToRemove(), -context.getxOffset(), Operation.DELETE),
                     applyHighLights(Color.BLACK, Color.BLACK, Color.BLACK)
                 );
             },
             () -> {
+                int index = Math.max(context.getIndexToRemove() - 1, 0);
+
                 RepositionNodesOperation repositionNodes = new RepositionNodesOperation(
                     nodes, arrows, prevArrows, headLabel, tailLabel, visualization_area, 
-                    context.getIndexToRemove(), nodes.size(), context.getListType()
+                    nodes.size(), context.getListType()
                 );
                 
-                if(index < arrows.size()){
+                if(index < arrows.size() && context.getIndexToRemove() != 0){
                     return new SequentialTransition(
                         applyHighLights(Color.ORANGE, Color.GOLD, Color.BLUE),
                         context.getListType() == ListType.DOUBLY ? 
                         ArrowAnimator.animateOut(prevArrows.get(index), 1 * speed, DrawArrowDirection.BACKWARD) 
                         : AnimationUtils.emptyAnimation(),
                         ArrowAnimator.animateOut(arrows.get(index), 1 * speed, DrawArrowDirection.BACKWARD),
-                        repositionNodes.build(index, context.getxOffset())
+                        repositionNodes.build(context.getIndexToRemove(), context.getxOffset(), Operation.DELETE)
                     );
                 }
 
                 return new SequentialTransition(
                     applyHighLights(Color.ORANGE, Color.GOLD, Color.BLUE),
-                    repositionNodes.build(index, context.getxOffset())
+                    repositionNodes.build(context.getIndexToRemove(), context.getxOffset(), Operation.DELETE)
                 );
             }
         ));
@@ -280,7 +329,7 @@ public final class DeleteOperation {
             headLabel, tailLabel, context.getxOffset(), context.getIndexToRemove(), nodes.size()
         );
 
-        fixLayout.build(timeLine, false);
+        fixLayout.build(timeLine, false, Operation.DELETE);
 
         FixCurvedArrowPosOperation fixCurvedArrow = new FixCurvedArrowPosOperation(
             nodes, curvedArrow, visualization_area, context.getxOffset(), context.getListType()

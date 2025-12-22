@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 
 import com.data_structures_visualizer.config.QueueVisualizerConfig;
-import com.data_structures_visualizer.config.StackVisualizerConfig;
 import com.data_structures_visualizer.models.entities.Queue;
 import com.data_structures_visualizer.util.DialogFactory;
 import com.data_structures_visualizer.util.SceneManager;
@@ -168,10 +167,10 @@ public final class QueueVisualizerController {
     }
 
     private void createQueue(int lenght){
-        if(lenght > StackVisualizerConfig.stackMaxLimit){
+        if(lenght > QueueVisualizerConfig.queueMaxLimit){
             Util.showAlert(
                 "Não foi possível criar a fila.",
-                String.format("Tamanho máximo permitido: %d", StackVisualizerConfig.stackMaxLimit),
+                String.format("Tamanho máximo permitido: %d", QueueVisualizerConfig.queueMaxLimit),
                 AlertType.CONFIRMATION
             );
             
