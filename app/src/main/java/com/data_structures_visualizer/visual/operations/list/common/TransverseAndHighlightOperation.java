@@ -27,10 +27,10 @@ public final class TransverseAndHighlightOperation {
             final int stepIndex = i;
 
             animationTimeLine.addStep(new Step(
-                () -> NodeAnimator.highlight(nodes.get(stepIndex).getRect(), 500 * speed, Color.GOLD),
+                () -> NodeAnimator.highlight(nodes.get(stepIndex).getRect(), 400 * speed, Color.GOLD),
                 () -> {
                     if(stepIndex - 1 >= 0){
-                        return NodeAnimator.highlight(nodes.get(stepIndex - 1).getRect(), 500 * speed, Color.GOLD);
+                        return NodeAnimator.highlight(nodes.get(stepIndex - 1).getRect(), 400 * speed, Color.GOLD);
                     }
                     
                     return AnimationUtils.emptyAnimation();

@@ -79,4 +79,30 @@ public final class NodeAnimator {
 
         return timeline;
     }
+
+    public static Animation pulseHighlight(Rectangle rect,Color highlightColor, int pulseMillis, int totalMillis){
+        Color base = (Color) rect.getStroke();
+
+        Timeline timeline = new Timeline(
+            new KeyFrame(Duration.ZERO,
+                new KeyValue(rect.strokeProperty(), base)
+            ),
+            new KeyFrame(Duration.millis(pulseMillis),
+                new KeyValue(rect.strokeProperty(), highlightColor)
+            )
+        );
+
+        timeline.setAutoReverse(true);
+
+        int cycles = Math.max(1, totalMillis / (pulseMillis * 2));
+
+        if(cycles % 2 != 0)
+            cycles++;
+
+        timeline.setCycleCount(cycles);
+
+        timeline.setOnFinished(e -> rect.setStroke(base));
+
+        return timeline;
+    }
 }

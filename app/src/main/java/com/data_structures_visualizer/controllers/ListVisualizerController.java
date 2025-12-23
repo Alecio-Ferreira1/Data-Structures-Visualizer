@@ -15,6 +15,7 @@ import com.data_structures_visualizer.visual.context.list.DeleteContext;
 import com.data_structures_visualizer.visual.context.list.InsertContext;
 import com.data_structures_visualizer.visual.operations.list.DeleteOperation;
 import com.data_structures_visualizer.visual.operations.list.InsertOperation;
+import com.data_structures_visualizer.visual.operations.list.SearchOperation;
 import com.data_structures_visualizer.visual.ui.Arrow;
 import com.data_structures_visualizer.visual.ui.ArrowLabel;
 import com.data_structures_visualizer.visual.ui.CurvedArrow;
@@ -538,7 +539,9 @@ public final class ListVisualizerController {
 
     private void setupSearchNode(){
         search_value_btn.setOnAction(e -> {
-            
+            DialogFactory.showInputDialog("Insira o valor para buscar: ", 
+                null, (Integer value, Integer v) -> { searchValue(value); }
+            );
         });
     }
 
@@ -649,6 +652,20 @@ public final class ListVisualizerController {
         );
     }   
 
+    private boolean validadeIndex(int index){
+        if(index < 0 || index > (nodes.size() - 1)){
+            Util.showAlert(
+                "Indíxe inválido!",
+                String.format("O valor do índice deve estar entre 0 e %d.", nodes.size() - 1),
+                AlertType.CONFIRMATION
+            );
+
+            return false;
+        }
+
+        return true;
+    }
+
     private boolean validadeInsertion(int pos){
         if((nodes.size() + 1) > ListVisualizerConfig.listMaxLimit){
             Util.showAlert(
@@ -660,17 +677,7 @@ public final class ListVisualizerController {
             return false;
         }
 
-        if(pos > nodes.size()){
-            Util.showAlert(
-                "Indíce inválido!",
-                String.format("O valor do índice deve estar entre 0 e %d.", nodes.size()),
-                AlertType.CONFIRMATION
-            );
-
-            return false;
-        }
-
-        return true;
+        return validadeIndex(pos);
     }
 
     private boolean validadeDeletion(boolean removeByIndex, int index){
@@ -684,13 +691,7 @@ public final class ListVisualizerController {
             return false;
         }
 
-        if(removeByIndex && index > (nodes.size() - 1)){
-            Util.showAlert(
-                "Indíxe inválido!",
-                String.format("O valor do índice deve estar entre 0 e %d.", nodes.size() - 1),
-                AlertType.CONFIRMATION
-            );
-
+        if(removeByIndex && !validadeIndex(index)){
             return false;
         }
 
@@ -742,7 +743,15 @@ public final class ListVisualizerController {
         );
 
         op.build(animationTimeLine);
-    
+        animationTimeLine.play();
+    }
+
+    private void searchValue(int value){
+        animationTimeLine.clear();
+
+        SearchOperation op = new SearchOperation(singlyLinkedList, nodes, value);
+
+        op.build(animationTimeLine);
         animationTimeLine.play();
     }
 }
