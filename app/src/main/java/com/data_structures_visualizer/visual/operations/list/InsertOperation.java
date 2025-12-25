@@ -6,6 +6,7 @@ import com.data_structures_visualizer.config.ListVisualizerConfig;
 import com.data_structures_visualizer.controllers.ListVisualizerController.ListType;
 import com.data_structures_visualizer.models.animation.AnimationTimeLine;
 import com.data_structures_visualizer.models.animation.Step;
+import com.data_structures_visualizer.models.text.ExplanationText;
 import com.data_structures_visualizer.visual.animation.ArrowAnimator;
 import com.data_structures_visualizer.visual.animation.NodeAnimator;
 import com.data_structures_visualizer.visual.animation.ArrowAnimator.DrawArrowDirection;
@@ -185,54 +186,62 @@ public final class InsertOperation {
     }
 
     private void addTransversalStep(AnimationTimeLine timeLine){
-        if(context.getPos() > 0){
-            new TransverseAndHighlightOperation(nodes, timeLine).build(context.getPos() - 1);
+        if(context.getPos() <= 0) return;
 
-            double speed = ListVisualizerConfig.speedVisualization;
+        context.getExplanationRepository().addExplanation(0, 
+            new ExplanationText(
+            0, "Primeiro, encontramos a região de inserção para inserir o nó {node:" 
+            + String.valueOf(context.getValue()) + "}.\n"
+        ));
+
+        new TransverseAndHighlightOperation(
+            nodes, timeLine, context.getExplanationRepository()
+        ).build(context.getPos() - 1, context.getValue());
+
+        double speed = ListVisualizerConfig.speedVisualization;
             
-            timeLine.addStep(new Step(
-                () -> {
-                    Rectangle prevNodeRect = nodes.get(context.getPos() - 1).getRect();
+        timeLine.addStep(new Step(
+            () -> {
+                Rectangle prevNodeRect = nodes.get(context.getPos() - 1).getRect();
             
-                    Animation hightLightPrevNode = NodeAnimator.animateStroke(
-                        prevNodeRect, (Color) prevNodeRect.getStroke(), Color.ORANGE, (int) (700 * speed), false
+                Animation hightLightPrevNode = NodeAnimator.animateStroke(
+                    prevNodeRect, (Color) prevNodeRect.getStroke(), Color.ORANGE, (int) (700 * speed), false
+                );
+
+                if(context.getPos() < nodes.size()){
+                    Rectangle nextNodeRect = nodes.get(context.getPos()).getRect();
+
+                    return new SequentialTransition(
+                        hightLightPrevNode,
+                        NodeAnimator.animateStroke(
+                            nextNodeRect, (Color) nextNodeRect.getStroke(), Color.BLUE, (int) (700 * speed), false
+                        )
                     );
+                }
 
-                    if(context.getPos() < nodes.size()){
-                        Rectangle nextNodeRect = nodes.get(context.getPos()).getRect();
+                return hightLightPrevNode;
+            },
+            () -> {
+                Rectangle prevNodeRect = nodes.get(context.getPos() - 1).getRect();
 
-                        return new SequentialTransition(
-                            hightLightPrevNode,
-                            NodeAnimator.animateStroke(
-                                nextNodeRect, (Color) nextNodeRect.getStroke(), Color.BLUE, (int) (700 * speed), false
-                            )
-                        );
-                    }
+                Animation undoHightLightPrevNode = NodeAnimator.animateStroke(
+                    prevNodeRect, (Color) prevNodeRect.getStroke(), Color.BLACK, (int) (700 * speed), false
+                );
 
-                    return hightLightPrevNode;
-                },
-                () -> {
-                    Rectangle prevNodeRect = nodes.get(context.getPos() - 1).getRect();
+                if(context.getPos() < nodes.size()){
+                    Rectangle nextNodeRect = nodes.get(context.getPos()).getRect();
 
-                    Animation undoHightLightPrevNode = NodeAnimator.animateStroke(
-                        prevNodeRect, (Color) prevNodeRect.getStroke(), Color.BLACK, (int) (700 * speed), false
+                    return new SequentialTransition(
+                        NodeAnimator.animateStroke(
+                            nextNodeRect, (Color) nextNodeRect.getStroke(), Color.BLACK, (int) (700 * speed), false
+                        ),
+                        undoHightLightPrevNode
                     );
+                }
 
-                    if(context.getPos() < nodes.size()){
-                        Rectangle nextNodeRect = nodes.get(context.getPos()).getRect();
-
-                        return new SequentialTransition(
-                            NodeAnimator.animateStroke(
-                                nextNodeRect, (Color) nextNodeRect.getStroke(), Color.BLACK, (int) (700 * speed), false
-                            ),
-                            undoHightLightPrevNode
-                        );
-                    }
-
-                    return undoHightLightPrevNode;
-                } 
-            ));
-        }
+                return undoHightLightPrevNode;
+            } 
+        ));
     }
 
     private void addRemoveArrowSteps(AnimationTimeLine timeLine){
@@ -245,8 +254,14 @@ public final class InsertOperation {
 
                 if(context.getListType() == ListType.DOUBLY){
                     return new SequentialTransition(
-                        ArrowAnimator.animateOut(arrows.get(context.getPos() - 1), 1 * speed, DrawArrowDirection.BACKWARD),
-                        ArrowAnimator.animateOut(prevArrows.get(context.getPos() - 1), 1 * speed, DrawArrowDirection.FORWARD)
+                        ArrowAnimator.animateOut(
+                            arrows.get(context.getPos() - 1), 1 * speed, 
+                            DrawArrowDirection.BACKWARD
+                        ),
+                        ArrowAnimator.animateOut(
+                            prevArrows.get(context.getPos() - 1), 
+                            1 * speed, DrawArrowDirection.FORWARD
+                        )
                     );
                 }
 

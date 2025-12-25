@@ -5,6 +5,7 @@ import com.data_structures_visualizer.controllers.ListVisualizerController.ListT
 import com.data_structures_visualizer.models.entities.CircularLinkedList;
 import com.data_structures_visualizer.models.entities.DoublyLinkedList;
 import com.data_structures_visualizer.models.entities.SinglyLinkedList;
+import com.data_structures_visualizer.models.text.ExplanationRepository;
 
 public final class InsertContext extends Context{
     private final int pos;
@@ -15,9 +16,12 @@ public final class InsertContext extends Context{
     public InsertContext(
         int pos, int value, ListType listType, double width, double height, int intialListSize,
         SinglyLinkedList<Integer> singlyLinkedList, DoublyLinkedList<Integer> doublyLinkedList, 
-        CircularLinkedList<Integer> circularLinkedList
+        CircularLinkedList<Integer> circularLinkedList, ExplanationRepository explanationRepository
     ){
-        super(listType, width, height, singlyLinkedList, doublyLinkedList, circularLinkedList);
+        super(
+            listType, width, height, singlyLinkedList, 
+            doublyLinkedList, circularLinkedList, explanationRepository
+        );
 
         final double size = Math.min(width, height);
 

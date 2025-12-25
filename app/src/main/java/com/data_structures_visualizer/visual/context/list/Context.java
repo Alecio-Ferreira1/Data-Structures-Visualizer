@@ -5,6 +5,7 @@ import com.data_structures_visualizer.controllers.ListVisualizerController.ListT
 import com.data_structures_visualizer.models.entities.CircularLinkedList;
 import com.data_structures_visualizer.models.entities.DoublyLinkedList;
 import com.data_structures_visualizer.models.entities.SinglyLinkedList;
+import com.data_structures_visualizer.models.text.ExplanationRepository;
 
 public abstract class Context {
     protected final ListType listType;
@@ -12,10 +13,12 @@ public abstract class Context {
     protected final SinglyLinkedList<Integer> singlyLinkedList;
     protected final DoublyLinkedList<Integer> doublyLinkedList;
     protected final CircularLinkedList<Integer> circularLinkedList;
+    protected final ExplanationRepository explanationRepository;
 
     protected Context(
         ListType listType, double width, double height, SinglyLinkedList<Integer> singlyLinkedList,
-        DoublyLinkedList<Integer> doublyLikedList, CircularLinkedList<Integer> circularLinkedList
+        DoublyLinkedList<Integer> doublyLikedList, CircularLinkedList<Integer> circularLinkedList,
+        ExplanationRepository explanationRepository
     ){
         final double size = Math.min(width, height);
 
@@ -24,6 +27,7 @@ public abstract class Context {
         this.doublyLinkedList = doublyLikedList;
         this.circularLinkedList = circularLinkedList;
         this.xOffset = ListVisualizerConfig.squareSize * size * (1 + ListVisualizerConfig.spacingBetweenNodes);
+        this.explanationRepository = explanationRepository;
     }
 
     public ListType getListType() {
@@ -44,5 +48,9 @@ public abstract class Context {
 
     public CircularLinkedList<Integer> getCircularLinkedList() {
         return circularLinkedList;
+    }
+
+    public ExplanationRepository getExplanationRepository() {
+        return explanationRepository;    
     }
 }

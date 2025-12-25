@@ -1,6 +1,7 @@
 package com.data_structures_visualizer.controllers;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 import com.data_structures_visualizer.config.ListVisualizerConfig;
@@ -8,21 +9,23 @@ import com.data_structures_visualizer.models.animation.AnimationTimeLine;
 import com.data_structures_visualizer.models.entities.CircularLinkedList;
 import com.data_structures_visualizer.models.entities.DoublyLinkedList;
 import com.data_structures_visualizer.models.entities.SinglyLinkedList;
+import com.data_structures_visualizer.models.text.ExplanationRepository;
+import com.data_structures_visualizer.models.text.ExplanationText;
 import com.data_structures_visualizer.util.DialogFactory;
 import com.data_structures_visualizer.util.SceneManager;
 import com.data_structures_visualizer.util.Util;
 import com.data_structures_visualizer.visual.context.list.DeleteContext;
 import com.data_structures_visualizer.visual.context.list.InsertContext;
+import com.data_structures_visualizer.visual.layout.LayoutManager;
+import com.data_structures_visualizer.visual.layout.ListLayoutManager;
 import com.data_structures_visualizer.visual.operations.list.DeleteOperation;
 import com.data_structures_visualizer.visual.operations.list.InsertOperation;
 import com.data_structures_visualizer.visual.operations.list.SearchOperation;
+import com.data_structures_visualizer.visual.text.ExplanationTextParser;
 import com.data_structures_visualizer.visual.ui.Arrow;
-import com.data_structures_visualizer.visual.ui.ArrowLabel;
-import com.data_structures_visualizer.visual.ui.CurvedArrow;
+import com.data_structures_visualizer.visual.ui.ExplanationTextRect;
 import com.data_structures_visualizer.visual.ui.VisualNode;
-import com.data_structures_visualizer.visual.ui.ArrowLabel.ArrowPosition;
 
-import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -81,17 +84,17 @@ public final class ListVisualizerController {
     @FXML
     private Button advance_btn;
 
-    private final ArrayList<VisualNode> nodes = new ArrayList<VisualNode>();
-    private final ArrayList<Arrow> arrows = new ArrayList<Arrow>();
-    private final ArrayList<Arrow> prevArrows = new ArrayList<Arrow>();
-    private CurvedArrow curvedArrow;  
+    private ListLayoutManager listLayoutManager;
+    private ExplanationTextRect explanationTextRect;
     private Button selectedButton;
-    private ArrowLabel headLabel;
-    private ArrowLabel tailLabel;
+    private ListType listType = ListType.SINGLY;
+
+    private final ExplanationRepository explanationRepository = new ExplanationRepository();
+    private AnimationTimeLine animationTimeLine = new AnimationTimeLine();
+
     private final SinglyLinkedList<Integer> singlyLinkedList = new SinglyLinkedList<Integer>(null);
     private final DoublyLinkedList<Integer> doublyLikedList = new DoublyLinkedList<Integer>(null);
     private final CircularLinkedList<Integer> circularLinkedList = new CircularLinkedList<Integer>(null);
-    private AnimationTimeLine animationTimeLine = new AnimationTimeLine();
 
     public enum ListType{
         SINGLY, DOUBLY, CIRCULAR
@@ -150,7 +153,8 @@ public final class ListVisualizerController {
 
     @FXML
     public void initialize(){
-        createtHeadAndTailLabels();
+        createExplanationRect();
+        startLayoutManager();
         putStartExample();
         selectButton(singly_linked_list_btn);
         handleToSelectionListType();
@@ -158,6 +162,24 @@ public final class ListVisualizerController {
         setupOperations();
         setupControlButtons();
         setupListeners();
+    }
+
+    private void startLayoutManager(){
+        listLayoutManager = new ListLayoutManager(
+            visualization_area, animationTimeLine, listType, singlyLinkedList,
+            doublyLikedList, circularLinkedList, explanationTextRect
+        );
+
+        listLayoutManager.build();
+    }
+
+    private void createExplanationRect(){
+        explanationTextRect = new ExplanationTextRect(
+            LayoutManager.explanationRectWidthRatio * 800, 
+            LayoutManager.explanationRectHeightRatio * 800
+        );
+
+        LayoutManager.createExplanationRect(visualization_area, explanationTextRect);
     }
 
     private void setupControlButtons(){
@@ -190,7 +212,7 @@ public final class ListVisualizerController {
 
     private void setupListeners(){
         visualization_area.layoutBoundsProperty().addListener((obs, odlVal, newVal) -> {
-            fixVisualizationAreaLayout(newVal.getWidth(), newVal.getHeight());
+            listLayoutManager.fixVisualizationAreaLayout(newVal.getWidth(), newVal.getHeight());
         });
 
         speed_visualization_slider.valueProperty().addListener((obs, oldValue, newVal) -> {
@@ -201,14 +223,31 @@ public final class ListVisualizerController {
         visualization_progress.progressProperty().bind(animationTimeLine.progressProperty());
 
         animationTimeLine.setOnFinished(() -> {
-            fixVisualizationAreaLayout(
+            listLayoutManager.fixVisualizationAreaLayout(
                 visualization_area.getWidth(),
                 visualization_area.getHeight()
             );
         });
+
+        animationTimeLine.setOnStepChanged(index -> {
+            List<ExplanationText> explanations = explanationRepository.get(index);
+
+            if(!explanations.isEmpty()) {
+                explanationTextRect.setContent(
+                    ExplanationTextParser.parse(explanations)
+                );
+            } 
+            
+            else{
+                explanationTextRect.clear();
+            }
+        });
     }
 
     private void putStartExample(){
+        ArrayList<VisualNode> nodes = listLayoutManager.getNodes();
+        ArrayList<Arrow> arrows = listLayoutManager.getArrows();
+
         for(int i = 0; i < 10; ++i){ 
             singlyLinkedList.pushBack(i);
             doublyLikedList.pushBack(i);
@@ -221,81 +260,56 @@ public final class ListVisualizerController {
             visualization_area.getChildren().add(nodes.get(i));
 
             if(i < 9){
-                arrows.add(i, new Arrow(ListVisualizerConfig.spacingBetweenNodes * ListVisualizerConfig.squareSize));
+                arrows.add(i, new Arrow(
+                    ListVisualizerConfig.spacingBetweenNodes * ListVisualizerConfig.squareSize
+                ));
+                
                 visualization_area.getChildren().add(arrows.get(i));
             }
         } 
     }
 
-    private void createtHeadAndTailLabels(){
-        headLabel = new ArrowLabel(
-            ListVisualizerConfig.spacingBetweenNodes * ListVisualizerConfig.squareSize * 625, 
-            "CABEÇA", 15
-        );
-
-        headLabel.setArrowPosition(ArrowPosition.BELOW);
-
-        tailLabel = new ArrowLabel(
-            ListVisualizerConfig.spacingBetweenNodes * ListVisualizerConfig.squareSize * 625, 
-            "CAUDA", 15
-        );
-
-        tailLabel.setArrowPosition(ArrowPosition.BELOW);
-    }
-
-    private ListType getListType(){
-        switch(selectedButton.getId()) {
-            case "singly_linked_list_btn": return ListType.SINGLY;
-            case "doubly_linked_list_btn": return ListType.DOUBLY;
-            default: return ListType.CIRCULAR;
-        }
-    }
-
-    private void fixVisualizationAreaLayout(double width, double height){
-        switch(getListType()) {
-            case ListType.SINGLY:
-                singlyListVisualization(width, height);
-                break;
-            
-            case ListType.DOUBLY:
-                doublyListVisualization(width, height);
-                break;
-        
-            default:
-                circularListVisualization(width, height);
-                break;
-        }
-    }
-
     private void handleToSelectionListType(){
         singly_linked_list_btn.setOnAction(e -> {
             selectButton(singly_linked_list_btn);
-            fixVisualizationAreaLayout(
-                visualization_area.getWidth(), 
-                visualization_area.getHeight()
+
+            listType = ListType.SINGLY;
+            listLayoutManager.setListType(listType);
+
+            listLayoutManager.fixVisualizationAreaLayout(
+                visualization_area.getWidth(), visualization_area.getHeight()
             );
 
             animationTimeLine.clear();
+            explanationRepository.clear();
         });
 
         doubly_linked_list_btn.setOnAction(e -> {
             selectButton(doubly_linked_list_btn);
-            fixVisualizationAreaLayout(
-                visualization_area.getWidth(), 
-                visualization_area.getHeight()
+
+            listType = ListType.DOUBLY;
+            listLayoutManager.setListType(listType);
+
+            listLayoutManager.fixVisualizationAreaLayout(
+                visualization_area.getWidth(), visualization_area.getHeight()
             );
 
             animationTimeLine.clear();
+            explanationRepository.clear();
         });
 
         circular_linked_list_btn.setOnAction(e -> {
             selectButton(circular_linked_list_btn);
-            fixVisualizationAreaLayout(
-                visualization_area.getWidth(), 
-                visualization_area.getHeight()
-            );
 
+            listType = ListType.CIRCULAR;
+            listLayoutManager.setListType(listType);
+
+            listLayoutManager.fixVisualizationAreaLayout(
+                visualization_area.getWidth(), visualization_area.getHeight()
+            );
+            
             animationTimeLine.clear();
+            explanationRepository.clear();
         });
     }
 
@@ -306,160 +320,6 @@ public final class ListVisualizerController {
 
         btn.setTextFill(Color.WHITE);
         selectedButton = btn;
-    }
-
-    private void removeCurvedArrow(){
-        if(curvedArrow != null){
-            visualization_area.getChildren().remove(curvedArrow);
-            curvedArrow = null;
-        }
-    }
-
-    private void singlyListVisualization(double width, double height){
-        removeCurvedArrow();
-
-        for(Arrow arrow : prevArrows){
-            visualization_area.getChildren().remove(arrow);
-        }
-
-        prevArrows.clear();
-
-        final double value = height < width ? height : width;
-        final double nodeWidth = value * ListVisualizerConfig.squareSize;
-        final double arrowLenght = ListVisualizerConfig.spacingBetweenNodes * nodeWidth;
-
-        anchorArrowLabels(
-            ListVisualizerConfig.squareSize * width * 0.6, 
-            ListVisualizerConfig.squareSize * height / 3, width, height
-        );
-        
-        for(int i = 0; i < nodes.size(); ++i){
-           nodes.get(i).update(nodeWidth, nodeWidth, value * 0.005);
-           nodes.get(i).setTranslateX(0);
-           nodes.get(i).setTranslateY(0);
-
-            anchorNode(nodes.get(i), width, height, i);
-
-            if(i < arrows.size()){
-                resizeArrow(arrows.get(i), arrowLenght, width, height);
-                    
-                AnchorPane.setTopAnchor(
-                    arrows.get(i), 
-                    (height / 2) - (arrows.get(i).getBoundsInParent().getHeight() / 2)
-                );
-
-                AnchorPane.setLeftAnchor(
-                    arrows.get(i), 
-                    ((ListVisualizerConfig.xOffsetForNodes * width) + nodeWidth + 
-                    ((1 + ListVisualizerConfig.spacingBetweenNodes) * nodeWidth) * i)
-                );
-            }
-        }
-    }
-
-    private void doublyListVisualization(double width, double height){
-        removeCurvedArrow();
-
-        double value = height < width ? height : width;
-        double nodeWidth = ListVisualizerConfig.squareSize * value;
-        double arrowLenght = ListVisualizerConfig.spacingBetweenNodes * nodeWidth;
-
-        anchorArrowLabels(
-            ListVisualizerConfig.squareSize * width * 0.6, 
-            ListVisualizerConfig.squareSize * height / 3, width, height
-        );
-
-        for(int i = 0; i < nodes.size(); ++i){
-            nodes.get(i).update(
-                value * ListVisualizerConfig.squareSize, 
-                value * ListVisualizerConfig.squareSize, value * 0.005
-            );
-
-            nodes.get(i).setTranslateX(0);
-            nodes.get(i).setTranslateY(0);
-            anchorNode(nodes.get(i), width, height, i);
-
-            if(i < arrows.size()){
-                resizeArrow(arrows.get(i), arrowLenght, width, height);
-
-                if(i >= prevArrows.size()){
-                    prevArrows.add(i, new Arrow(arrows.get(i)));
-                    prevArrows.get(i).setRotate(180);
-                    visualization_area.getChildren().add(prevArrows.get(i));
-                }
-
-                resizeArrow(prevArrows.get(i), arrowLenght, width, height);
-                    
-                AnchorPane.setTopAnchor(
-                    arrows.get(i), 
-                    (height / 2) - (arrows.get(i).getBoundsInParent().getHeight() * 1.25)
-                );
-
-                AnchorPane.setLeftAnchor(
-                    arrows.get(i), 
-                    ((ListVisualizerConfig.xOffsetForNodes * width) + nodeWidth + 
-                    ((1 + ListVisualizerConfig.spacingBetweenNodes) * nodeWidth) * i)
-                );
-
-                AnchorPane.setTopAnchor(
-                    prevArrows.get(i), 
-                    (height / 2) + (prevArrows.get(i).getBoundsInParent().getHeight() / 2)
-                );
-
-                AnchorPane.setLeftAnchor(
-                    prevArrows.get(i), 
-                    ((ListVisualizerConfig.xOffsetForNodes * width) + nodeWidth + 
-                    ((1 + ListVisualizerConfig.spacingBetweenNodes) * nodeWidth) * i)
-                );
-            }
-        }
-    }
-
-    private void circularListVisualization(double width, double height){
-        singlyListVisualization(width, height);
-
-        if(nodes.size() > 0){
-            Platform.runLater(() -> {
-                visualization_area.applyCss();
-                visualization_area.layout();
-
-                int lastNodeIndex = nodes.size() - 1;
-                VisualNode last = nodes.get(lastNodeIndex);
-                VisualNode first = nodes.get(0);
-                double startX = last.getLayoutX() + (last.getRect().getWidth() / 2);
-                double startY = last.getLayoutY() + last.getRect().getHeight();
-                double endX = first.getLayoutX() + (first.getRect().getWidth() / 2);
-                double endY = startY;
-                double value = Math.min(width, height);
-
-                if(curvedArrow == null){
-                    curvedArrow = new CurvedArrow(startX, startY, endX, endY, 0.02 * value);
-                    visualization_area.getChildren().add(curvedArrow);
-                }
-
-                if(nodes.size() == 1){
-                    startX = last.getLayoutX() + last.getRect().getWidth();
-                    startY = last.getLayoutY() + (last.getRect().getHeight() / 2);
-                    curvedArrow.update(startX, startY, endX, endY, 0.02 * value, true);
-                    return;
-                }
-                
-                curvedArrow.update(startX, startY, endX, endY, 0.02 * value, false);
-            });
-        }
-    }
-    
-    private void anchorNode(VisualNode node, double width, double height, int pos){
-        AnchorPane.setTopAnchor(node, (height / 2) - (node.getRect().getHeight() / 2)); 
-        AnchorPane.setLeftAnchor(node, 
-            (ListVisualizerConfig.xOffsetForNodes * width) + 
-            (((1 + ListVisualizerConfig.spacingBetweenNodes) * node.getRect().getWidth() * pos))
-        );
-    }
-
-    private void resizeArrow(Arrow arrow, double lenght, double width, double height){
-        arrow.setStrokeWidth(height * 0.003);
-        arrow.setLenght(lenght);
     }
 
     private void handleToScreenChange(){
@@ -485,12 +345,17 @@ public final class ListVisualizerController {
             DialogFactory.showInputDialog(
                 "Insira o tamanho da lista: ", null, (Integer lenght, Integer v) -> {
                 createList(lenght);
-                fixVisualizationAreaLayout(visualization_area.getWidth(), visualization_area.getHeight());
+                listLayoutManager.fixVisualizationAreaLayout(
+                    visualization_area.getWidth(), 
+                    visualization_area.getHeight()
+                );
             });
         });
     }
     
     private void setupInsertNode(){
+        ArrayList<VisualNode> nodes = listLayoutManager.getNodes();
+
         insert_node_btn.setOnAction(e -> {
             SelectionWindowDialog.show(
                 "Selecione o tipo de inserção: ", 
@@ -549,7 +414,7 @@ public final class ListVisualizerController {
         clear_btn.setOnAction(e -> {
             DialogFactory.ConfirmDialog.show(
                 "Tem certeza que deseja limpar a área de visualização?", () -> {
-                clearVisualization();
+                listLayoutManager.clearVisualization();
             });
         });
     }
@@ -565,7 +430,10 @@ public final class ListVisualizerController {
             return;
         }
 
-       clearVisualization();
+        listLayoutManager.clearVisualization();
+
+        ArrayList<VisualNode> nodes = listLayoutManager.getNodes();
+        ArrayList<Arrow> arrows = listLayoutManager.getArrows();
 
         for(int i = 0; i < lenght; ++i){
             Integer randInt = ThreadLocalRandom.current().nextInt(0, 9999);
@@ -588,74 +456,12 @@ public final class ListVisualizerController {
         }
     }
 
-    private void clearVisualization(){
-        visualization_area.getChildren().clear();
-        nodes.clear();
-        arrows.clear();
-        curvedArrow = null;
-        prevArrows.clear();
-        animationTimeLine.clear();
-        singlyLinkedList.clear();
-        doublyLikedList.clear();
-        circularLinkedList.clear();
-    }
-
-    private void anchorArrowLabels(double arrowLenght, double fontSize, double width, double height){
-        if(nodes.isEmpty()){
-            visualization_area.getChildren().remove(headLabel);
-            visualization_area.getChildren().remove(tailLabel);
-            return;
-        }
-
-        if(!visualization_area.getChildren().contains(headLabel)){
-            visualization_area.getChildren().add(headLabel);
-        }
-
-        if(!visualization_area.getChildren().contains(tailLabel)){
-            visualization_area.getChildren().add(tailLabel);
-        }
-
-        final double value = height < width ? height : width;
-        final double nodeWidth = ListVisualizerConfig.squareSize * value; 
-        final double xOffset = 0.01 * value;
-        final double labelsYoffset = 1.7;
-
-        headLabel.setText("CABEÇA");
-        headLabel.setTranslateX(0);
-        headLabel.update(arrowLenght, headLabel.getText(), fontSize);
-
-        if(nodes.size() == 1){
-            visualization_area.getChildren().remove(tailLabel);
-            headLabel.setText("CABEÇA\nCAUDA");
-        }
-
-        if(visualization_area.getChildren().contains(tailLabel)){
-            tailLabel.setTranslateX(0);
-            tailLabel.update(arrowLenght, "CAUDA", fontSize);
-
-            AnchorPane.setTopAnchor(
-                tailLabel, ((height / 2) - (nodeWidth / 2)) - ((1 + labelsYoffset) * arrowLenght)
-            );
-
-            AnchorPane.setLeftAnchor(
-                tailLabel, ListVisualizerConfig.xOffsetForNodes + (nodeWidth / 2) + 
-                ((1 + ListVisualizerConfig.spacingBetweenNodes) * nodeWidth * (nodes.size() - 1)) - xOffset
-            );
-        }
-            
-        AnchorPane.setTopAnchor(
-            headLabel, ((height / 2) - (nodeWidth / 2)) - ((1 + labelsYoffset) * arrowLenght)
-        );
-
-        AnchorPane.setLeftAnchor(
-            headLabel, ListVisualizerConfig.xOffsetForNodes + (nodeWidth / 2) - xOffset
-        );
-    }   
-
     private boolean validadeIndex(int index){
+        ArrayList<VisualNode> nodes = listLayoutManager.getNodes();
+
         if(index < 0 || index > (nodes.size() - 1)){
             Util.showAlert(
-                "Indíxe inválido!",
+                "Indíce inválido!",
                 String.format("O valor do índice deve estar entre 0 e %d.", nodes.size() - 1),
                 AlertType.CONFIRMATION
             );
@@ -667,6 +473,8 @@ public final class ListVisualizerController {
     }
 
     private boolean validadeInsertion(int pos){
+        ArrayList<VisualNode> nodes = listLayoutManager.getNodes();
+
         if((nodes.size() + 1) > ListVisualizerConfig.listMaxLimit){
             Util.showAlert(
                 "Lista cheia!",
@@ -677,10 +485,16 @@ public final class ListVisualizerController {
             return false;
         }
 
-        return validadeIndex(pos);
+        if(pos > nodes.size()){
+            return validadeIndex(pos);
+        }
+
+        return true;
     }
 
     private boolean validadeDeletion(boolean removeByIndex, int index){
+        ArrayList<VisualNode> nodes = listLayoutManager.getNodes();
+
         if(nodes.isEmpty()){
             Util.showAlert(
                 "Lista vazia!",
@@ -699,10 +513,12 @@ public final class ListVisualizerController {
     }
 
     private InsertContext buildInsertContext(int value, int pos){
+        ArrayList<VisualNode> nodes = listLayoutManager.getNodes();
+
         return new InsertContext(
-            pos, value, getListType(), visualization_area.getWidth(), 
+            pos, value, listType, visualization_area.getWidth(), 
             visualization_area.getHeight(), nodes.size(), singlyLinkedList,
-            doublyLikedList, circularLinkedList
+            doublyLikedList, circularLinkedList, explanationRepository
         );
     }
 
@@ -710,12 +526,15 @@ public final class ListVisualizerController {
         if(!validadeInsertion(pos)) return;
 
         animationTimeLine.clear();
+        explanationRepository.clear();
 
         InsertContext insertContext = buildInsertContext(value, pos);
 
         InsertOperation op = new InsertOperation(
-            insertContext, visualization_area, nodes, arrows, prevArrows, 
-            curvedArrow, headLabel, tailLabel
+            insertContext, visualization_area, listLayoutManager.getNodes(), 
+            listLayoutManager.getArrows(), listLayoutManager.getPrevArrows(), 
+            listLayoutManager.getCurvedArrow(), listLayoutManager.getHeadLabel(), 
+            listLayoutManager.getTailLabel()
         );
 
         op.build(animationTimeLine);
@@ -724,9 +543,10 @@ public final class ListVisualizerController {
 
     private DeleteContext buildDeleteContext(int value, boolean removeByIndex){
         return new DeleteContext(
-            value, getListType(), visualization_area.getWidth(), 
-            visualization_area.getHeight(), nodes.size(), removeByIndex,
-            singlyLinkedList, doublyLikedList, circularLinkedList
+            value, listType, visualization_area.getWidth(), 
+            visualization_area.getHeight(), listLayoutManager.getNodes().size(), 
+            removeByIndex, singlyLinkedList, doublyLikedList, circularLinkedList,
+            explanationRepository
         );
     }
 
@@ -734,12 +554,15 @@ public final class ListVisualizerController {
         if(!validadeDeletion(removeByIndex, value)) return;
 
         animationTimeLine.clear();
+        explanationRepository.clear();
 
         DeleteContext deleteContext = buildDeleteContext(value, removeByIndex);
 
         DeleteOperation op = new DeleteOperation(
-            deleteContext, visualization_area, nodes, arrows, prevArrows, 
-            curvedArrow, headLabel, tailLabel
+            deleteContext, visualization_area, listLayoutManager.getNodes(), 
+            listLayoutManager.getArrows(), listLayoutManager.getPrevArrows(), 
+            listLayoutManager.getCurvedArrow(), listLayoutManager.getHeadLabel(), 
+            listLayoutManager.getTailLabel()
         );
 
         op.build(animationTimeLine);
@@ -748,8 +571,11 @@ public final class ListVisualizerController {
 
     private void searchValue(int value){
         animationTimeLine.clear();
+        explanationRepository.clear();
 
-        SearchOperation op = new SearchOperation(singlyLinkedList, nodes, value);
+        SearchOperation op = new SearchOperation(
+            singlyLinkedList, listLayoutManager.getNodes(), value, explanationRepository
+        );
 
         op.build(animationTimeLine);
         animationTimeLine.play();

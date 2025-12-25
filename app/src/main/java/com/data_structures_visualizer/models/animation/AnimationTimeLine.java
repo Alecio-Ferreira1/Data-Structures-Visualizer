@@ -1,5 +1,7 @@
 package com.data_structures_visualizer.models.animation;
 
+import java.util.function.IntConsumer;
+
 import com.data_structures_visualizer.models.entities.DoublyLinkedList;
 
 import javafx.animation.Animation;
@@ -14,6 +16,11 @@ public final class AnimationTimeLine {
     private Animation currentAnimation;
     private DoubleProperty progress = new SimpleDoubleProperty(0);
     private Runnable onFinished;
+    private IntConsumer onStepChanged;
+
+    public void setOnStepChanged(IntConsumer onStepChanged){
+        this.onStepChanged = onStepChanged;
+    }
 
     public ReadOnlyDoubleProperty progressProperty(){
         return progress;
@@ -30,6 +37,10 @@ public final class AnimationTimeLine {
 
         else{
             progress.set(((index + 1) / (double) steps.lenght()));
+        }
+
+        if(onStepChanged != null){
+            onStepChanged.accept(index);
         }
     }
 
@@ -128,5 +139,9 @@ public final class AnimationTimeLine {
         steps.clear();
         updateProgress();
         index = -1;
+    }
+
+    public int size(){
+        return steps.lenght();
     }
 }

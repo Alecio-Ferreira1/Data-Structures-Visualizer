@@ -6,6 +6,7 @@ import com.data_structures_visualizer.config.ListVisualizerConfig;
 import com.data_structures_visualizer.models.animation.AnimationTimeLine;
 import com.data_structures_visualizer.models.animation.Step;
 import com.data_structures_visualizer.models.entities.SinglyLinkedList;
+import com.data_structures_visualizer.models.text.ExplanationRepository;
 import com.data_structures_visualizer.visual.animation.NodeAnimator;
 import com.data_structures_visualizer.visual.operations.list.common.TransverseAndHighlightOperation;
 import com.data_structures_visualizer.visual.ui.VisualNode;
@@ -18,11 +19,16 @@ public final class SearchOperation {
     private final ArrayList<VisualNode> nodes;
     private final int value;
     private int index;
+    private final ExplanationRepository explanationRepository;
 
-    public SearchOperation(SinglyLinkedList<Integer> list, ArrayList<VisualNode> nodes, int value){
+    public SearchOperation(
+        SinglyLinkedList<Integer> list, ArrayList<VisualNode> nodes, int value,
+        ExplanationRepository explanationRepository
+    ){
         this.list = list;
         this.nodes = nodes;
         this.value = value;
+        this.explanationRepository = explanationRepository;
     }
 
     public void build(AnimationTimeLine timeLine){
@@ -34,7 +40,9 @@ public final class SearchOperation {
         index = list.indexOf(value);
         index = index != -1 ? index : nodes.size();
 
-        new TransverseAndHighlightOperation(nodes, timeLine).build(index);
+        new TransverseAndHighlightOperation(
+            nodes, timeLine, explanationRepository
+        ).build(index, value);
     }
 
     private void addHighlightResultsStep(AnimationTimeLine timeLine){

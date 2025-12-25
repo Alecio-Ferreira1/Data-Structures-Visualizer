@@ -42,7 +42,7 @@ public final class DeleteOperation {
     public DeleteOperation(
         DeleteContext context, AnchorPane visualization_area, ArrayList<VisualNode> nodes,
         ArrayList<Arrow> arrows, ArrayList<Arrow> prevArrows, CurvedArrow curvedArrow, 
-        ArrowLabel headLabel, ArrowLabel tailLabel
+        ArrowLabel headLabel, ArrowLabel tailLabel 
     ){
         this.context = context;
         this.visualization_area = visualization_area;
@@ -70,7 +70,9 @@ public final class DeleteOperation {
          
         if(context.removeByIndex()) index = context.getValue();
         
-        new TransverseAndHighlightOperation(nodes, timeLine).build(index == -1 ? nodes.size() : index);
+        new TransverseAndHighlightOperation(
+            nodes, timeLine, context.getExplanationRepository()
+        ).build(index == -1 ? nodes.size() : index, context.getValue());
 
         context.setIndexToRemove(index);
 

@@ -8,6 +8,7 @@ import com.data_structures_visualizer.models.entities.Stack;
 import com.data_structures_visualizer.util.DialogFactory;
 import com.data_structures_visualizer.util.SceneManager;
 import com.data_structures_visualizer.util.Util;
+import com.data_structures_visualizer.visual.operations.stack.PushOperation;
 import com.data_structures_visualizer.visual.ui.ArrowLabel;
 import com.data_structures_visualizer.visual.ui.StackBase;
 import com.data_structures_visualizer.visual.ui.VisualNode;
@@ -125,22 +126,29 @@ public final class StackVisualizerController {
 
     private void setupOperations(){
         create_btn.setOnAction(e -> {
-            DialogFactory.showInputDialog("Insira o tamanho da pilha: ", null, (Integer lenght, Integer v) -> {
+            DialogFactory.showInputDialog("Insira o tamanho da pilha: ", 
+                null, (Integer lenght, Integer v) -> {
                 createStack(lenght);
                 fixVisualizationAreaLayout(visualization_area.getWidth(), visualization_area.getHeight());
             });
         });
 
         push_btn.setOnAction(e -> {
-
+            DialogFactory.showInputDialog("Insira o valor para empilhar: ", 
+                null, 
+                (Integer value, Integer v) -> pushNode(value)
+            );
         });
 
         pop_btn.setOnAction(e -> {
-
+            DialogFactory.ConfirmDialog.show(
+                "Deseja desempilhar um nó?",  () -> popNode()
+            );
         });
 
         clear_btn.setOnAction(e -> {
-            DialogFactory.ConfirmDialog.show("Tem certeza que deseja limpar a área de visualização?", () -> {
+            DialogFactory.ConfirmDialog.show(
+                "Tem certeza que deseja limpar a área de visualização?", () -> {
                 clearVisualization();
             });
         });
@@ -171,7 +179,6 @@ public final class StackVisualizerController {
             visualization_area.getChildren().add(nodes.get(i));
         }
     }
-
    
     private void clearVisualization(){
         for(VisualNode node : nodes){
@@ -208,5 +215,28 @@ public final class StackVisualizerController {
         AnchorPane.setLeftAnchor(topLabel,
             (width / 2) - (topLabel.getArrow().getBaseLenght() / 2) - xOffset
         );
+    }
+
+    private boolean emptyStackMessage(){
+        if(stack.isEmpty()){
+            Util.showAlert(
+                "Pilha Vazia!", 
+                "Não há elementos para desempilhar.", 
+                AlertType.CONFIRMATION
+            );
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private void pushNode(Integer value){
+        PushOperation op = new PushOperation();
+    }
+
+    private void popNode(){
+        if(emptyStackMessage()) return;
+
     }
 }

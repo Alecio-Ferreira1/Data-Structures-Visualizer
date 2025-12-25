@@ -8,10 +8,14 @@ import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.ParallelTransition;
+import javafx.animation.PathTransition;
 import javafx.animation.ScaleTransition;
 import javafx.animation.Timeline;
 import javafx.animation.TranslateTransition;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.MoveTo;
+import javafx.scene.shape.Path;
+import javafx.scene.shape.QuadCurveTo;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 
@@ -104,5 +108,47 @@ public final class NodeAnimator {
         timeline.setOnFinished(e -> rect.setStroke(base));
 
         return timeline;
+    }
+
+    public static Animation animateCurvePath(
+        VisualNode node, double startX, double startY, double targetX, double targetY,
+        double arcHeight, double durationSeconds
+    ){
+        Path path = new Path();
+        path.getElements().add(new MoveTo(startX + node.getWidth() / 2, startY + node.getHeight() / 2));
+
+        double controlX = (startX + targetX) / 2;
+        double controlY = Math.min(startY, targetY) - arcHeight; 
+
+        path.getElements().add(new QuadCurveTo(
+            controlX, controlY, targetX + node.getWidth() / 2, targetY + node.getHeight() / 2
+        ));
+
+        PathTransition pathTransition = new PathTransition(Duration.seconds(durationSeconds), path, node);
+
+        ScaleTransition scale = new ScaleTransition(Duration.seconds(0.2), node);
+        scale.setFromX(0.8);
+        scale.setFromY(0.8);
+        scale.setToX(1);
+        scale.setToY(1);
+
+        FadeTransition fade = new FadeTransition(Duration.seconds(0.2), node);
+        fade.setFromValue(0.7);
+        fade.setToValue(1);
+
+        return new ParallelTransition(pathTransition, scale, fade);
+    }
+
+    public static Animation animateFall(VisualNode node, double targetY, double durationSeconds){
+        TranslateTransition fall = new TranslateTransition(Duration.seconds(durationSeconds), node);
+
+        double currentY = node.getLayoutY() + node.getTranslateY();
+
+        fall.setFromY(currentY);
+        fall.setToY(targetY);
+
+        fall.setInterpolator(Interpolator.EASE_IN);
+        
+        return fall;
     }
 }

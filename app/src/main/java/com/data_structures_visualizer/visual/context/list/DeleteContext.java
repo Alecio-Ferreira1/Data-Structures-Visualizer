@@ -4,6 +4,7 @@ import com.data_structures_visualizer.controllers.ListVisualizerController.ListT
 import com.data_structures_visualizer.models.entities.CircularLinkedList;
 import com.data_structures_visualizer.models.entities.DoublyLinkedList;
 import com.data_structures_visualizer.models.entities.SinglyLinkedList;
+import com.data_structures_visualizer.models.text.ExplanationRepository;
 
 public final class DeleteContext extends Context {
     private final int value;
@@ -13,9 +14,13 @@ public final class DeleteContext extends Context {
     public DeleteContext(
         int value, ListType listType, double width, double height, int intialListSize,
         boolean removeByIndex, SinglyLinkedList<Integer> singlyLinkedList, 
-        DoublyLinkedList<Integer> doublyLinkedList, CircularLinkedList<Integer> circularLinkedList
+        DoublyLinkedList<Integer> doublyLinkedList, CircularLinkedList<Integer> circularLinkedList,
+        ExplanationRepository explanationRepository
     ){
-        super(listType, width, height, singlyLinkedList, doublyLinkedList, circularLinkedList);
+        super(
+            listType, width, height, singlyLinkedList, doublyLinkedList, 
+            circularLinkedList, explanationRepository
+        );
         
         this.value = value;
         this.removeByIndex = removeByIndex;
