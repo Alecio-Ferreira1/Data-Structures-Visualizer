@@ -6,7 +6,9 @@ import com.data_structures_visualizer.config.ListVisualizerConfig;
 import com.data_structures_visualizer.controllers.ListVisualizerController.ListType;
 import com.data_structures_visualizer.models.animation.AnimationTimeLine;
 import com.data_structures_visualizer.models.animation.Step;
+import com.data_structures_visualizer.models.color.Colors;
 import com.data_structures_visualizer.models.text.ExplanationText;
+import com.data_structures_visualizer.visual.animation.AnimationUtils;
 import com.data_structures_visualizer.visual.animation.ArrowAnimator;
 import com.data_structures_visualizer.visual.animation.NodeAnimator;
 import com.data_structures_visualizer.visual.animation.ArrowAnimator.DrawArrowDirection;
@@ -62,8 +64,9 @@ public final class InsertOperation {
         addTranslateNodeStep(timeLine);
         addStepToConnectPrevArrow(timeLine);
         addStepToConnectNextArrow(timeLine);
-        addStepToMoveCurvedArrowIfNeeded(timeLine);
+        addNotifyChangesStep(timeLine);
         addFixLabelsStep(timeLine);
+        addStepToMoveCurvedArrowIfNeeded(timeLine);
     }
 
     private Animation createNode(double size, int value, int pos){
@@ -79,6 +82,7 @@ public final class InsertOperation {
 
         nodes.add(context.getPos(), newNode);
         newNode.getRect().setStrokeWidth(Math.min(width, height) * 0.005);
+        newNode.getRect().setFill(Colors.node);
         newNode.setOpacity(0);
         newNode.setScaleX(0);
         newNode.setScaleY(0);
@@ -94,7 +98,7 @@ public final class InsertOperation {
 
         SequentialTransition st = new SequentialTransition(
             NodeAnimator.emergeEffect(newNode, 3 * ListVisualizerConfig.speedVisualization, true),
-            NodeAnimator.highlight(newNode.getRect(), pos, Color.GOLD)
+            NodeAnimator.highlight(newNode.getRect(), pos, Colors.node)
         );  
 
         st.setOnFinished(e -> { newNode.getRect().setStroke(Color.BLACK); });
@@ -186,67 +190,112 @@ public final class InsertOperation {
     }
 
     private void addTransversalStep(AnimationTimeLine timeLine){
-        if(context.getPos() <= 0) return;
-
-        context.getExplanationRepository().addExplanation(0, 
-            new ExplanationText(
-            0, "Primeiro, encontramos a região de inserção para inserir o nó {node:" 
-            + String.valueOf(context.getValue()) + "}.\n"
-        ));
-
+        buildExplanationBeforeTransversalStep(timeLine);
+        
         new TransverseAndHighlightOperation(
             nodes, timeLine, context.getExplanationRepository()
         ).build(context.getPos() - 1, context.getValue());
 
         double speed = ListVisualizerConfig.speedVisualization;
-            
+
+        buildExplanationAfterTransversalStep(timeLine);
+
         timeLine.addStep(new Step(
             () -> {
-                Rectangle prevNodeRect = nodes.get(context.getPos() - 1).getRect();
-            
-                Animation hightLightPrevNode = NodeAnimator.animateStroke(
-                    prevNodeRect, (Color) prevNodeRect.getStroke(), Color.ORANGE, (int) (700 * speed), false
+                Rectangle prevNodeRect = context.getPos() - 1 < 0 ? null :
+                                         nodes.get(context.getPos() - 1).getRect();
+                
+                Rectangle nextNodeRect = context.getPos() >= nodes.size() ? null :
+                                         nodes.get(context.getPos()).getRect();
+
+                return new SequentialTransition(
+                    prevNodeRect != null ? NodeAnimator.animateFill(
+                        prevNodeRect, (Color) prevNodeRect.getFill(), 
+                        Colors.prev, (int) (700 * speed), false
+                    ) : AnimationUtils.emptyAnimation(),
+                    nextNodeRect != null ? NodeAnimator.animateFill(
+                        nextNodeRect, (Color) nextNodeRect.getFill(), 
+                        Colors.next, (int) (700 * speed), false
+                    ) : AnimationUtils.emptyAnimation()
                 );
-
-                if(context.getPos() < nodes.size()){
-                    Rectangle nextNodeRect = nodes.get(context.getPos()).getRect();
-
-                    return new SequentialTransition(
-                        hightLightPrevNode,
-                        NodeAnimator.animateStroke(
-                            nextNodeRect, (Color) nextNodeRect.getStroke(), Color.BLUE, (int) (700 * speed), false
-                        )
-                    );
-                }
-
-                return hightLightPrevNode;
             },
             () -> {
-                Rectangle prevNodeRect = nodes.get(context.getPos() - 1).getRect();
+                Rectangle prevNodeRect = context.getPos() - 1 < 0 ? null :
+                                         nodes.get(context.getPos() - 1).getRect();
+                
+                Rectangle nextNodeRect = context.getPos() >= nodes.size() ? null :
+                                         nodes.get(context.getPos()).getRect();
 
-                Animation undoHightLightPrevNode = NodeAnimator.animateStroke(
-                    prevNodeRect, (Color) prevNodeRect.getStroke(), Color.BLACK, (int) (700 * speed), false
+                return new SequentialTransition(
+                    nextNodeRect != null ? NodeAnimator.animateFill(
+                        nextNodeRect, (Color) nextNodeRect.getFill(), 
+                        Color.rgb(0, 255, 0), (int) (700 * speed), false
+                    ) : AnimationUtils.emptyAnimation(),
+                    prevNodeRect != null ? NodeAnimator.animateFill(
+                        prevNodeRect, (Color) prevNodeRect.getFill(), 
+                        Color.rgb(0, 255, 0), (int) (700 * speed), false
+                    ) : AnimationUtils.emptyAnimation()
                 );
-
-                if(context.getPos() < nodes.size()){
-                    Rectangle nextNodeRect = nodes.get(context.getPos()).getRect();
-
-                    return new SequentialTransition(
-                        NodeAnimator.animateStroke(
-                            nextNodeRect, (Color) nextNodeRect.getStroke(), Color.BLACK, (int) (700 * speed), false
-                        ),
-                        undoHightLightPrevNode
-                    );
-                }
-
-                return undoHightLightPrevNode;
             } 
         ));
     }
 
+    private void  buildExplanationBeforeTransversalStep(AnimationTimeLine timeLine){
+        if(context.getPos() != 0){
+            if(context.getPos() == nodes.size()){
+                context.getExplanationRepository().addExplanation(0, 
+                    new ExplanationText(
+                    0, "Inserção na cauda." 
+                ));
+            }
+
+            context.getExplanationRepository().addExplanation(0, 
+                new ExplanationText(
+                0, "Primeiro, é feita uma busca da região de inserção para inserir o novo nó {node:" 
+                + String.valueOf(context.getValue()) + "}.\n"
+            ));   
+        }
+
+        else{
+            context.getExplanationRepository().addExplanation(0, 
+                new ExplanationText(
+                0, "Inserção na cabeça.\n" 
+            ));
+        }
+    }
+
+    private void buildExplanationAfterTransversalStep(AnimationTimeLine timeLine){
+        if(context.getPos() != 0){
+            context.getExplanationRepository().addExplanation(timeLine.size() == 0 ? 1 : timeLine.size(), 
+                new ExplanationText(timeLine.size() == 0 ? 1 : timeLine.size(), 
+                    "Região de inserção encontrada. \n" 
+                    + "Nó {prev:anterior} (Valor {prev:" + nodes.get(context.getPos() - 1).getText() + "})"
+                )
+            );
+        }
+
+        if(context.getPos() < nodes.size()){
+            context.getExplanationRepository().addExplanation(
+                timeLine.size() == 0 ? 1 : timeLine.size(), 
+                new ExplanationText(timeLine.size() == 0 ? 1 : timeLine.size(), 
+                    "{next:Próximo } nó: (Valor {next:" + 
+                    String.valueOf(nodes.get(context.getPos()).getText()) + "})" 
+                )
+            );
+        }
+    }
+
     private void addRemoveArrowSteps(AnimationTimeLine timeLine){
-        if(context.getPos() == 0 || context.getPos() == context.getInitialListSize()) 
+        if(context.getPos() == 0 || context.getPos() == context.getInitialListSize()){
+            context.getExplanationRepository().addExplanation(
+                timeLine.size(),
+                new ExplanationText(timeLine.size(), "")
+            );
+
             return;
+        }
+        
+        buildExplanationForRemoveArrowsStep(timeLine);
 
         timeLine.addStep(new Step(
             () -> {
@@ -286,10 +335,37 @@ public final class InsertOperation {
         ));
     }
 
+    private void buildExplanationForRemoveArrowsStep(AnimationTimeLine timeLine){
+        String prevValue = nodes.get(context.getPos() - 1).getText();
+        String nextValue = nodes.get(context.getPos()).getText();
+
+        String explanation = "O ponteiro prox. do nó {prev:anterior} ({prev:"
+                             + prevValue + "}) deixa de apontar para o nó {next:" + nextValue + "}.";
+
+        if(context.getListType() == ListType.DOUBLY){
+           explanation = "O ponteiro prox. do nó {prev:anterior} ({prev:"
+                         + prevValue + "}) deixa de apontar para o nó {value:" + nextValue + "}.\n" 
+                         + "O ponteiro ant. do nó {next:próximo} ({next:"+ nextValue + "}) "
+                         + "deixa de apontar para o nó ({prev:"+ prevValue + "})."; 
+        }
+
+        context.getExplanationRepository().addExplanation(
+            timeLine.size(),
+            new ExplanationText(timeLine.size(), explanation)
+        );
+    }
+
     private void addCreateNodeStep(AnimationTimeLine timeLine){
         RepositionNodesOperation repositionNodes = new RepositionNodesOperation(
             nodes, arrows, prevArrows, headLabel, tailLabel, visualization_area, 
             context.getInitialListSize(), context.getListType()
+        );
+
+        context.getExplanationRepository().addExplanation(
+            timeLine.size(),
+            new ExplanationText(timeLine.size(), 
+                "Criando o nó {node:" + context.getValue() + "}."
+            )
         );
 
         timeLine.addStep(new Step(
@@ -307,6 +383,13 @@ public final class InsertOperation {
     private void addTranslateNodeStep(AnimationTimeLine timeLine){
         final double height = visualization_area.getHeight();
 
+        context.getExplanationRepository().addExplanation(
+            timeLine.size(),
+            new ExplanationText(timeLine.size(), 
+                "Criando o nó {node:" + context.getValue() + "}."
+            )
+        );
+
         timeLine.addStep(new Step(
             () -> NodeAnimator.animateMove(
                 newNode, 0, (height / 2) - (context.getNodeWidth() / 2) - (0.2 * height), 
@@ -323,12 +406,15 @@ public final class InsertOperation {
         if(context.getPos() == 0) return;   
 
         double speed = 1 * ListVisualizerConfig.speedVisualization;
+
+        buildExplanationForStepToConnectPrevArrow(timeLine);
         
         timeLine.addStep(new Step(
             () -> {
-                Animation resetStrokeColorFomPrevNode = NodeAnimator.animateStroke(
+                Animation resetFillColorFomPrevNode = NodeAnimator.animateFill(
                     nodes.get(context.getPos() - 1).getRect(), 
-                    (Color) nodes.get(context.getPos() - 1).getRect().getStroke(), Color.BLACK, 
+                    (Color) nodes.get(context.getPos() - 1).getRect().getFill(), 
+                     Color.rgb(0, 255, 25), 
                     (int) (300 * ListVisualizerConfig.speedVisualization) , false
                 );
 
@@ -337,7 +423,11 @@ public final class InsertOperation {
                         createArrows(
                             context.getNodeWidth() * ListVisualizerConfig.spacingBetweenNodes,
                             context.getPos() - 1
-                        ), resetStrokeColorFomPrevNode
+                        ), resetFillColorFomPrevNode, 
+                        NodeAnimator.animateFill(
+                            nodes.get(context.getPos()).getRect(), (Color) nodes.get(context.getPos()).getRect().getFill(), 
+                            Color.rgb(0, 255, 25), (int) (700 * speed), false
+                        )
                     );
                 }
 
@@ -350,22 +440,22 @@ public final class InsertOperation {
                         arrowAnimation,
                         ArrowAnimator.animateIn(
                             prevArrows.get(context.getPos() - 1), speed, DrawArrowDirection.FORWARD
-                        ), resetStrokeColorFomPrevNode
+                        ), resetFillColorFomPrevNode
                     );
                 }
 
-                return new SequentialTransition(arrowAnimation, resetStrokeColorFomPrevNode);
+                return new SequentialTransition(arrowAnimation, resetFillColorFomPrevNode);
             },
             () -> {
-                Animation resetStrokeColor = NodeAnimator.animateStroke(
+                Animation resetFillColor = NodeAnimator.animateFill(
                     nodes.get(context.getPos() - 1).getRect(), 
-                    (Color) nodes.get(context.getPos() - 1).getRect().getStroke(), Color.ORANGE, 
+                    (Color) nodes.get(context.getPos() - 1).getRect().getFill(), Colors.prev, 
                     (int) (300 * ListVisualizerConfig.speedVisualization) , false
                 );
 
                 if(!exec.getCreatedArrows().isEmpty()){
                     return new SequentialTransition(
-                        resetStrokeColor, 
+                        resetFillColor, 
                         undoCreateArrows()
                     );
                 }
@@ -376,22 +466,44 @@ public final class InsertOperation {
 
                 if(context.getListType() == ListType.DOUBLY){
                     return new SequentialTransition(
-                        resetStrokeColor,
+                        resetFillColor,
                         ArrowAnimator.animateOut(
                             prevArrows.get(context.getPos() - 1), speed, DrawArrowDirection.FORWARD
                         ), arrowAnimation
                     );
                 }
 
-                return new SequentialTransition(resetStrokeColor, arrowAnimation);
+                return new SequentialTransition(resetFillColor, arrowAnimation);
             }
         ));   
+    }
+
+    private void buildExplanationForStepToConnectPrevArrow(AnimationTimeLine timeLine){
+        String prevValue = nodes.get(context.getPos() - 1).getText();
+
+        String explanation = "O ponteiro prox. do nó {prev:anterior} de valor ({prev:"
+                             + prevValue + "}) aponta para o novo nó ({node:" + context.getValue() + "}).";
+
+        if(context.getListType() == ListType.DOUBLY){
+           explanation = "O ponteiro prox. do nó {prev:anterior} de valor ({prev:"
+                         + prevValue + "}) aponta para o {node:novo nó} ({node:" + context.getValue() + "})"
+                         + " e o ponteiro ant. do {node:novo nó} passa a apontar para o nó {prev:anterior}" 
+                         + "({" + context.getValue() + "}).";
+
+        }
+
+        context.getExplanationRepository().addExplanation(
+            timeLine.size(),
+            new ExplanationText(timeLine.size(), explanation)
+        );
     }
 
     private void addStepToConnectNextArrow(AnimationTimeLine timeLine){
         if(context.getPos() >= context.getInitialListSize()) return;
 
         double speed = ListVisualizerConfig.speedVisualization;
+
+        buildExplanationForStepToConnectNextArrow(timeLine);
 
         timeLine.addStep(new Step(
             () -> {
@@ -405,8 +517,9 @@ public final class InsertOperation {
 
                     return new SequentialTransition(
                         toCreateArrows, 
-                        NodeAnimator.animateStroke(
-                            nextNodeRect, (Color) nextNodeRect.getStroke(), Color.BLACK, (int) (700 * speed), false
+                        NodeAnimator.animateFill(
+                            nextNodeRect, (Color) nextNodeRect.getFill(), 
+                            Color.rgb(0, 255, 25), (int) (700 * speed), false
                         )
                     );
                 }
@@ -418,8 +531,9 @@ public final class InsertOperation {
                     Rectangle nextNodeRect = nodes.get(context.getPos() + 1).getRect();
 
                     return new SequentialTransition(
-                        NodeAnimator.animateStroke(
-                            nextNodeRect, (Color) nextNodeRect.getStroke(), Color.BLUE, (int) (700 * speed), false
+                        NodeAnimator.animateFill(
+                            nextNodeRect, (Color) nextNodeRect.getFill(), 
+                            Colors.next, (int) (700 * speed), false
                         ),
                         undoCreateArrows()
                     );
@@ -430,12 +544,51 @@ public final class InsertOperation {
         ));
     }
 
-    private void addStepToMoveCurvedArrowIfNeeded(AnimationTimeLine timeLine){
-        FixCurvedArrowPosOperation fixCurvedArrow = new FixCurvedArrowPosOperation(
-            nodes, curvedArrow, visualization_area, context.getxOffset(), context.getListType()
+    private void buildExplanationForStepToConnectNextArrow(AnimationTimeLine timeLine){
+        String nextValue = nodes.get(context.getPos() + 1).getText();
+
+        String explanation = "O ponteiro prox. do {node:novo nó} ({node:"
+                             + context.getValue() + "}) aponta para o {next:próximo} nó ({next:" + nextValue + "}).";
+
+        if(context.getListType() == ListType.DOUBLY){
+           explanation = "O ponteiro prox. do {node:novo nó} ({node:"
+                         + context.getValue() + "}) aponta para o {next:próximo} nó ({next:" + nextValue + "}) "
+                         + "e o ponteiro ant. do {next:próximo nó} passa a apontar para o {node:novo nó}"
+                         +  "({" + context.getValue() + "}).\n";
+
+        }
+
+        context.getExplanationRepository().addExplanation(
+            timeLine.size(),
+            new ExplanationText(timeLine.size(), explanation)
+        );
+    }
+
+    private void addNotifyChangesStep(AnimationTimeLine timeLine){
+        context.getExplanationRepository().addExplanation(
+            timeLine.size(),
+            new ExplanationText(timeLine.size(), 
+                "Nó ({inserted:" + context.getValue() + "}) adicionado à lista."
+            )
         );
 
-        fixCurvedArrow.build(timeLine);
+        timeLine.addStep(new Step(
+            () -> {
+                Rectangle newNode = nodes.get(context.getPos()).getRect();
+
+                return NodeAnimator.animateFill(
+                    newNode, (Color) newNode.getFill(), 
+                    Color.rgb(0, 255, 0), 800, false
+                );
+            }, 
+            () -> {
+                Rectangle newNode = nodes.get(context.getPos()).getRect();
+
+                return NodeAnimator.animateFill(
+                    newNode, (Color) newNode.getFill(), Colors.node, 800, false
+                );
+            }
+        ));
     }
 
     private void addFixLabelsStep(AnimationTimeLine timeLine){
@@ -443,6 +596,36 @@ public final class InsertOperation {
             headLabel, tailLabel, context.getxOffset(), context.getPos(), context.getInitialListSize()
         );
 
+        String explantion = "";
+
+        if(context.getPos() == context.getInitialListSize()){
+            explantion = "O novo nó ({inserted:" + context.getValue() + "}) passa a ser a nova cauda.";
+        }
+
+        if(context.getPos() == 0){
+            explantion = "O novo nó ({inserted:" + context.getValue() + "}) passa a ser a nova cabeça.";
+        }
+
+        context.getExplanationRepository().addExplanation(timeLine.size(), 
+            new ExplanationText(timeLine.size(), explantion)
+        );
+
         fixArrowLabels.build(timeLine, true, Operation.INSERT);
+    }
+
+    private void addStepToMoveCurvedArrowIfNeeded(AnimationTimeLine timeLine){
+        FixCurvedArrowPosOperation fixCurvedArrow = new FixCurvedArrowPosOperation(
+            nodes, curvedArrow, visualization_area, context.getxOffset(), context.getListType()
+        );
+
+        context.getExplanationRepository().addExplanation(timeLine.size(), 
+            new ExplanationText(timeLine.size(), 
+                context.getListType() == ListType.CIRCULAR ? 
+                "A cauda volta a apontar para a cabeça." : 
+                ""
+            )
+        );
+
+        fixCurvedArrow.build(timeLine);
     }
 }

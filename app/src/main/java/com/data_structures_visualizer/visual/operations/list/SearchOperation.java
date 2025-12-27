@@ -7,6 +7,7 @@ import com.data_structures_visualizer.models.animation.AnimationTimeLine;
 import com.data_structures_visualizer.models.animation.Step;
 import com.data_structures_visualizer.models.entities.SinglyLinkedList;
 import com.data_structures_visualizer.models.text.ExplanationRepository;
+import com.data_structures_visualizer.models.text.ExplanationText;
 import com.data_structures_visualizer.visual.animation.NodeAnimator;
 import com.data_structures_visualizer.visual.operations.list.common.TransverseAndHighlightOperation;
 import com.data_structures_visualizer.visual.ui.VisualNode;
@@ -40,21 +41,42 @@ public final class SearchOperation {
         index = list.indexOf(value);
         index = index != -1 ? index : nodes.size();
 
+        explanationRepository.addExplanation(0, 
+            new ExplanationText(0, 
+                "Iniciando a busca pelo valor ({node:" + String.valueOf(value) + "}).\n"
+            )
+        );
+
         new TransverseAndHighlightOperation(
             nodes, timeLine, explanationRepository
         ).build(index, value);
     }
 
     private void addHighlightResultsStep(AnimationTimeLine timeLine){
-        if(index != -1){
+        if(index != -1 && index < nodes.size()){
             VisualNode node = nodes.get(index);
             Rectangle rect = node.getRect();
             int speed = (int) ListVisualizerConfig.speedVisualization * 300;
 
             timeLine.addStep(new Step(
-                () -> NodeAnimator.pulseHighlight(rect, Color.ORANGE, speed + 200, 7000),
-                () -> NodeAnimator.animateStroke(rect, (Color) rect.getStroke(), Color.BLACK, speed, false)
+                () -> NodeAnimator.pulseHighlight(rect, Color.GOLDENROD, speed + 200, 7000),
+                () -> NodeAnimator.animateFill(rect, (Color) rect.getStroke(), Color.BLACK, speed, false)
             )); 
+
+            explanationRepository.addExplanation(timeLine.size() - 1, 
+                new ExplanationText(timeLine.size(), 
+                    "O valor ({found:" + String.valueOf(value) + "}) FOI encontrado.\n"
+                )
+            );
+        }
+
+        else{
+            explanationRepository.addExplanation(timeLine.size() - 1, 
+                new ExplanationText(timeLine.size(), 
+                    "Toda a lista foi percorrida e nenhum valor não correspondeu a ({not_found:" 
+                    + String.valueOf(value) + "})," + " portanto, o valor NÃO foi encontrado.\n"
+                )
+            );
         }
     }
 }

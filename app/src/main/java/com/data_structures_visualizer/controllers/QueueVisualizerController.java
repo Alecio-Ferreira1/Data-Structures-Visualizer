@@ -3,11 +3,13 @@ package com.data_structures_visualizer.controllers;
 import java.util.ArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 
+import com.data_structures_visualizer.config.ListVisualizerConfig;
 import com.data_structures_visualizer.config.QueueVisualizerConfig;
 import com.data_structures_visualizer.models.entities.Queue;
 import com.data_structures_visualizer.util.DialogFactory;
 import com.data_structures_visualizer.util.SceneManager;
 import com.data_structures_visualizer.util.Util;
+import com.data_structures_visualizer.visual.ui.Arrow;
 import com.data_structures_visualizer.visual.ui.ArrowLabel;
 import com.data_structures_visualizer.visual.ui.ArrowLabel.ArrowPosition;
 import com.data_structures_visualizer.visual.ui.QueueDelimiter;
@@ -45,6 +47,8 @@ public final class QueueVisualizerController {
 
     private QueueDelimiter queueDelimiter;
     private final ArrayList<VisualNode> nodes = new ArrayList<VisualNode>();
+    private final ArrayList<Arrow> arrows = new ArrayList<Arrow>();
+
     private ArrowLabel startLabel;
     private ArrowLabel endLabel;
 
@@ -66,11 +70,19 @@ public final class QueueVisualizerController {
 
         endLabel.setArrowPosition(ArrowPosition.BELOW);
 
-        for(int i = 0; i < 13; ++i){  
+        for(int i = 0; i < 12; ++i){  
             nodes.add(i, new VisualNode(
                 625 * QueueVisualizerConfig.squareSize, 
                 625 * QueueVisualizerConfig.squareSize, Integer.toString(i)
             ));
+
+            if(i < 11){
+                arrows.add(i, new Arrow(
+                    ListVisualizerConfig.spacingBetweenNodes * ListVisualizerConfig.squareSize 
+                ));
+
+                visualization_area.getChildren().add(arrows.get(i));
+            }
 
             visualization_area.getChildren().add(nodes.get(i));
         } 
@@ -133,6 +145,24 @@ public final class QueueVisualizerController {
                     xOffset + (width / 2) - (queueDelimiter.getWidth() / 2) +
                     ((1 + QueueVisualizerConfig.spacingBetweenNodes) * nodes.get(i).getRect().getWidth() * i)
                 );
+
+                final double nodeWidth = value * ListVisualizerConfig.squareSize;
+                final double arrowLenght = ListVisualizerConfig.spacingBetweenNodes * nodeWidth;
+
+                if(i < arrows.size()){
+                    resizeArrow(arrows.get(i), arrowLenght, width, height);
+                    
+                    AnchorPane.setTopAnchor(
+                        arrows.get(i), 
+                        (height / 2) - (arrows.get(i).getBoundsInParent().getHeight() / 2)
+                    );
+
+                    AnchorPane.setLeftAnchor(
+                        arrows.get(i), 
+                        xOffset + (width / 2) - (queueDelimiter.getWidth() / 2) + nodeWidth +
+                        ((1 + QueueVisualizerConfig.spacingBetweenNodes) * nodes.get(i).getRect().getWidth() * i)
+                    );
+                }
             }
 
             anchorArrowLabels(
@@ -141,6 +171,11 @@ public final class QueueVisualizerController {
                 width, height
             );
         });
+    }
+
+    private void resizeArrow(Arrow arrow, double lenght, double width, double height){
+        arrow.setStrokeWidth(height * 0.003);
+        arrow.setLenght(lenght);
     }
 
     private void setupOperations(){
@@ -189,6 +224,14 @@ public final class QueueVisualizerController {
                 String.valueOf(randInt)
             ));
 
+            if(i < lenght - 1){
+                arrows.add(new Arrow(
+                    (1 + QueueVisualizerConfig.spacingBetweenNodes) * QueueVisualizerConfig.squareSize 
+                ));
+
+                visualization_area.getChildren().add(arrows.get(i));
+            }
+
             visualization_area.getChildren().add(nodes.get(i));
         }
     }
@@ -196,6 +239,10 @@ public final class QueueVisualizerController {
     private void clearVisualization(){
         for(VisualNode node : nodes){
             visualization_area.getChildren().remove(node);
+        }
+
+        for(Arrow arrow : arrows){
+            visualization_area.getChildren().remove(arrow);
         }
 
         visualization_area.getChildren().remove(startLabel);

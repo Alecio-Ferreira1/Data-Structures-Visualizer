@@ -39,7 +39,7 @@ public final class ExplanationTextParser {
 
         while (matcher.find()) {
             if (matcher.start() > lastIndex) {
-                out.add(TextFactory.colored(
+                out.add(TextFactory.create(
                     raw.substring(lastIndex, matcher.start()),
                     Color.BLACK
                 ));
@@ -54,7 +54,7 @@ public final class ExplanationTextParser {
         }
 
         if (lastIndex < raw.length()) {
-            out.add(TextFactory.colored(
+            out.add(TextFactory.create(
                 raw.substring(lastIndex),
                 Color.BLACK
             ));

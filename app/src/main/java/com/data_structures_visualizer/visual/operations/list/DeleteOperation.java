@@ -76,10 +76,12 @@ public final class DeleteOperation {
 
         context.setIndexToRemove(index);
 
+        Color green = Color.rgb(0, 255, 25);
+
         if(index != -1){
             timeLine.addStep(new Step(
                 () -> applyHighLights(Color.ORANGE, Color.GOLD, Color.BLUE),  
-                () -> applyHighLights(Color.BLACK, Color.BLACK, Color.BLACK)
+                () -> applyHighLights(green, green, green)
             ));
         }
     }
@@ -98,13 +100,13 @@ public final class DeleteOperation {
         double speed = ListVisualizerConfig.speedVisualization;
         
         return new SequentialTransition(
-            NodeAnimator.animateStroke(
+            NodeAnimator.animateFill(
                 targetRect, (Color) targetRect.getStroke(), targetRectColor, (int) (700 * speed), false
             ),
-            index - 1 >= 0 ? NodeAnimator.animateStroke(
+            index - 1 >= 0 ? NodeAnimator.animateFill(
                 prevRect, (Color) prevRect.getStroke(), prevRectColor, (int) (700 * speed), false
             ) : AnimationUtils.emptyAnimation(),
-            index + 1 < nodes.size() ? NodeAnimator.animateStroke(
+            index + 1 < nodes.size() ? NodeAnimator.animateFill(
                 nextRect, (Color) nextRect.getStroke(), nextRectColor, (int) (700 * speed), false
             ) : AnimationUtils.emptyAnimation()
         );
@@ -273,6 +275,7 @@ public final class DeleteOperation {
 
     private void addEstablishConnectionsStep(AnimationTimeLine timeLine){
         double speed = ListVisualizerConfig.speedVisualization;
+        Color green = Color.rgb(0, 255, 25);
         
         timeLine.addStep(new Step(
             () -> {
@@ -290,13 +293,13 @@ public final class DeleteOperation {
                         context.getListType() == ListType.DOUBLY ? 
                         ArrowAnimator.animateIn(prevArrows.get(index), 1 * speed, DrawArrowDirection.FORWARD) 
                         : AnimationUtils.emptyAnimation(),
-                        applyHighLights(Color.BLACK, Color.BLACK, Color.BLACK)
+                        applyHighLights(green, green, green)
                     );
                 }
 
                 return new SequentialTransition(
                     repositionNodes.build(context.getIndexToRemove(), -context.getxOffset(), Operation.DELETE),
-                    applyHighLights(Color.BLACK, Color.BLACK, Color.BLACK)
+                    applyHighLights(green, green, green)
                 );
             },
             () -> {

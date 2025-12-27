@@ -33,27 +33,19 @@ public final class TransverseAndHighlightOperation {
         for(int i = 0; i < index; ++i){
             final int stepIndex = i;
 
-            if(!(stepIndex == index - 1 && index == nodes.size())){
-                explanationRepository.addExplanation(animationTimeLine.size(),
-                    new ExplanationText(    
-                        animationTimeLine.size(), 
-                        "Valor do nó atual: {node:" + String.valueOf(nodes.get(stepIndex).getText()) +"}"
-                    )
-                );
-            }
-
-            else{
-                explanationRepository.addExplanation(animationTimeLine.size(), new ExplanationText(
+            explanationRepository.addExplanation(animationTimeLine.size(),
+                new ExplanationText(    
                     animationTimeLine.size(), 
-                    "O valor {node:" + String.valueOf(targetValue) + "} não foi encontrado!"
-                ));
-            }
+                    "Valor do nó atual: {node:" + String.valueOf(nodes.get(stepIndex).getText()) +"}\n"
+                    + "Índice: {node:" + String.valueOf(i) + "}\n"
+                )
+            );
 
             animationTimeLine.addStep(new Step(
-                () -> NodeAnimator.highlight(nodes.get(stepIndex).getRect(), 700 * speed, Color.GOLD),
+                () -> NodeAnimator.highlight(nodes.get(stepIndex).getRect(), 700 * speed, Color.YELLOW),
                 () -> {
                     if(stepIndex - 1 >= 0){
-                        return NodeAnimator.highlight(nodes.get(stepIndex - 1).getRect(), 700 * speed, Color.GOLD);
+                        return NodeAnimator.highlight(nodes.get(stepIndex - 1).getRect(), 700 * speed, Color.YELLOW);
                     }
                     
                     return AnimationUtils.emptyAnimation();

@@ -21,17 +21,17 @@ import javafx.util.Duration;
 
 public final class NodeAnimator {
     public static Animation highlight(Rectangle rect, int speedMillis, Color highlightColor){
-        Color base = (Color) rect.getStroke();
+        Color base = (Color) rect.getFill();
 
         Timeline timeline = new Timeline(
             new KeyFrame(Duration.ZERO,
-                new KeyValue(rect.strokeProperty(), base) 
+                new KeyValue(rect.fillProperty(), base) 
             ),
             new KeyFrame(Duration.millis(speedMillis),
-                new KeyValue(rect.strokeProperty(), highlightColor) 
+                new KeyValue(rect.fillProperty(), highlightColor) 
             ),
             new KeyFrame(Duration.millis(speedMillis * 2),
-                new KeyValue(rect.strokeProperty(), base) 
+                new KeyValue(rect.fillProperty(), base) 
             )
         );
 
@@ -66,17 +66,23 @@ public final class NodeAnimator {
         return new ParallelTransition(scaleTransition, fadeTransition);
     }
 
-    public static Animation animateStroke(Rectangle rectangle, Color fromColor, Color toColor, int durationMillis, boolean repeat){
+    public static Animation animateFill(
+        Rectangle rect, Color fromColor, Color toColor, int durationMillis, boolean repeat
+    ){
         Timeline timeline = new Timeline(
-            new KeyFrame(Duration.ZERO, new KeyValue(rectangle.strokeProperty(), fromColor)),
-            new KeyFrame(Duration.millis(durationMillis), new KeyValue(rectangle.strokeProperty(), toColor))
+            new KeyFrame(Duration.ZERO,
+                new KeyValue(rect.fillProperty(), fromColor)
+            ),
+            new KeyFrame(Duration.millis(durationMillis),
+                new KeyValue(rect.fillProperty(), toColor)
+            )
         );
 
         if(repeat){
             timeline.setCycleCount(Timeline.INDEFINITE);
-            timeline.setAutoReverse(true);    
-        }
-
+            timeline.setAutoReverse(true);
+        } 
+    
         else{
             timeline.setCycleCount(1);
         }
@@ -84,15 +90,15 @@ public final class NodeAnimator {
         return timeline;
     }
 
-    public static Animation pulseHighlight(Rectangle rect,Color highlightColor, int pulseMillis, int totalMillis){
-        Color base = (Color) rect.getStroke();
+    public static Animation pulseHighlight(Rectangle rect, Color highlightColor, int pulseMillis, int totalMillis){
+        Color base = (Color) rect.getFill();
 
         Timeline timeline = new Timeline(
             new KeyFrame(Duration.ZERO,
-                new KeyValue(rect.strokeProperty(), base)
+                new KeyValue(rect.fillProperty(), base)
             ),
             new KeyFrame(Duration.millis(pulseMillis),
-                new KeyValue(rect.strokeProperty(), highlightColor)
+                new KeyValue(rect.fillProperty(), highlightColor)
             )
         );
 
